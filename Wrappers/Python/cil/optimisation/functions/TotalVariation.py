@@ -215,10 +215,13 @@ class TotalVariation(Function):
         for k in range(self.iterations):
                                                                                    
             t0 = t
+            
             self.gradient.adjoint(tmp_q, out = tmp_x)
             
-            # axpby now works for matrices
-            tmp_x.axpby(-self.regularisation_parameter*tau, 1.0, x, out=tmp_x)
+            # sapyb now works for matrices
+           
+            tmp_x.sapyb(-self.regularisation_parameter*tau, x, 1.0, out=tmp_x)
+            
             self.projection_C(tmp_x, out = tmp_x)                       
 
             self.gradient.direct(tmp_x, out=self.p1)
