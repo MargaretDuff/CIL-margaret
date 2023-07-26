@@ -17,7 +17,7 @@
 
 import cil
 from cil.optimisation.functions import Function, IndicatorBox
-from cil.optimisation.operators import GradientOperator, AnisotropicGradientOperator
+from cil.optimisation.operators import GradientOperator 
 import numpy as np
 from numbers import Number
 import warnings
@@ -312,70 +312,3 @@ class TotalVariation(Function):
         return self
 
 
-
-class DirectionalTotalVariation(TotalVariation):
-    
-    r'''
-    Reference:
-      
-    Multicontrast MRI Reconstruction with Structure-Guided Total Variation, 
-    Matthias J. Ehrhardt and Marta M. Betcke, SIAM Imaging Sciences 2016
-        
-    '''    
-    
-    
-    def __init__(self,
-                 max_iteration=100, 
-                 tolerance = None, 
-                 correlation = "Space",
-                 backend = "c",
-                 lower = -np.inf, 
-                 upper = np.inf,
-                 isotropic = True,
-                 split = False,
-                 info = False,
-                 warmstart = False,
-                 reference_image = None,
-                 edge_parameter=1e-2):
-
-        self.reference_image = reference_image
-        self.eta = edge_parameter
-        
-        super(DirectionalTotalVariation, self).__init__(
-                max_iteration=max_iteration, 
-                 tolerance=tolerance,
-                 correlation=correlation,
-                 backend=backend,
-                 lower=lower,
-                 upper=upper,
-                 isotropic=isotropic,
-                 split=split,
-                 info=info,
-                 warmstart=warmstart)
-        self.set_up_anisotropy_field()
-
-    @property
-    def gradient(self):
-        '''creates a gradient operator if not instantiated yet
-        There is no check that the variable _domain is changed after instantiation (should not be the case)'''
-        if self._gradient is None:
-            if self._domain is not None:
-                self._gradient = AnisotropicGradientOperator(self._domain, correlation = self.correlation, backend = self.backend, ksi = self.anisotropy_field)
-        return self._gradient
-
-    def set_up_anisotropy_field(self):
-        ''' creates anisotropy field from reference image and edge parameter'''
-        # compute gradient of reference image
-        try:
-            geom = self.reference_image.geometry
-        except:
-            geom = self.reference_image
-        regular_gradient = GradientOperator(geom, correlation=self.correlation, backend=self.backend)
-        reference_image_gradient = regular_gradient.direct(self.reference_image)
-        self.ndim = reference_image_gradient.shape[0]
-        # compute scalar field of 1/(\|reference_image_gradient\|^2+ eta^2)**(1/2) (Numpy format)
-        np_scalar_field = 1/np.sqrt(sum([reference_image_gradient[i].as_array()**2 for i in range(self.ndim)]) + self.eta**2 )
-        scalar_field = self.reference_image.clone()
-        scalar_field.fill(np_scalar_field)
-        # compute anisotropy field
-        self.anisotropy_field = scalar_field * reference_image_gradient
