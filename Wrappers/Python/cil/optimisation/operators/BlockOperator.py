@@ -78,7 +78,9 @@ class BlockOperator(Operator):
             raise ValueError(
                     'Dimension and size do not match: expected {} got {}'
                     .format(n_elements,len(args)))
-        # TODO
+        
+        self.block_norms=args.get('block_norms', False)
+        # TODO:
         # until a decent way to check equality of Acquisition/Image geometries
         # required to fullfil "Operators in a Block are required to have the same 
         # domain column-wise and the same range row-wise."
@@ -142,18 +144,25 @@ class BlockOperator(Operator):
         AcquisitionModel's we use PowerMethod if applicable, otherwise we raise an Error
         '''
         norm = []
-        for op in self.operators:
-            if hasattr(op, 'norm'):
-                norm.append(op.norm(**kwargs) ** 2.)
-            else:
-                # use Power method
-                if op.is_linear():
-                    norm.append(
-                            LinearOperator.PowerMethod(op, 20)[0]
-                            )
+        if self.block_norms:
+            all_geoms = [i.range_geometry().shape for i in self.operator]
+
+            if all(x == all_geoms[0] for x in all_geoms):
+                norms = [self.operator[0].norm()]*len(self.operator)
+        else:
+            
+            for op in self.operators:
+                if hasattr(op, 'norm'):
+                    norm.append(op.norm(**kwargs) ** 2.)
                 else:
-                    raise TypeError('Operator {} does not have a norm method and is not linear'.format(op))
-        return numpy.sqrt(sum(norm))    
+                    # use Power method
+                    if op.is_linear():
+                        norm.append(
+                                LinearOperator.PowerMethod(op, 20)[0]
+                                )
+                    else:
+                        raise TypeError('Operator {} does not have a norm method and is not linear'.format(op))
+            return numpy.sqrt(sum(norm))    
     
     def direct(self, x, out=None):
         '''Direct operation for the BlockOperator
