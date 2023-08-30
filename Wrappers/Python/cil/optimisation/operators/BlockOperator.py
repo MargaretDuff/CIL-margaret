@@ -146,7 +146,7 @@ class BlockOperator(Operator):
         norm = []
         if self.block_norms:
             all_geoms = [i.range_geometry().shape for i in self.operators]
-            print(all_geoms)
+          #  print(all_geoms)
             if all(x == all_geoms[0] for x in all_geoms):
                 if hasattr(self.operators[0], 'norm'):
                     norm=[self.operators[0].norm(**kwargs) ** 2.]*len(self.operators)
@@ -155,23 +155,45 @@ class BlockOperator(Operator):
                         norm=[LinearOperator.PowerMethod(self.operators[0], 20)[0]]*len(self.operators)
                     else:
                         raise TypeError('Operator {} does not have a norm method and is not linear'.format(op))
-        
-                
-                return numpy.sqrt(sum(norm))  
-        
-        
-            
-        for op in self.operators:
-            if hasattr(op, 'norm'):
-                norm.append(op.norm(**kwargs) ** 2.)
             else:
-                # use Power method
-                if op.is_linear():
-                    norm.append(
-                            LinearOperator.PowerMethod(op, 20)[0]
-                            )
+                hold_geometries=[]
+    
+                hold_norms=[]
+                for op in self.operators:
+                    if op.range_geometry().shape in hold_geometries:
+                        norm.append(hold_norms[hold_geometries.index(op.range_geometry().shape)])
+                    else:
+                        hold_geometries.append(op.range_geometry().shape)
+                      #  print(hold_geometries)
+                        if hasattr(op, 'norm'):
+                            norm.append(op.norm(**kwargs) ** 2.)
+                            hold_norms.append(norm[-1])
+                        else:
+                            # use Power method
+                            if op.is_linear():
+                                norm.append(
+                                        LinearOperator.PowerMethod(op, 20)[0]
+                                        )
+                                hold_norms.append(norm[-1])
+                            else:
+                                raise TypeError('Operator {} does not have a norm method and is not linear'.format(op))
+      
+                
+            return numpy.sqrt(sum(norm))  
+        
+        
+        else:   
+            for op in self.operators:
+                if hasattr(op, 'norm'):
+                    norm.append(op.norm(**kwargs) ** 2.)
                 else:
-                    raise TypeError('Operator {} does not have a norm method and is not linear'.format(op))
+                    # use Power method
+                    if op.is_linear():
+                        norm.append(
+                                LinearOperator.PowerMethod(op, 20)[0]
+                                )
+                    else:
+                        raise TypeError('Operator {} does not have a norm method and is not linear'.format(op))
         return numpy.sqrt(sum(norm))    
 
     def direct(self, x, out=None):
