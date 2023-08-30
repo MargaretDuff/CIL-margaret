@@ -53,7 +53,7 @@ class ProjectionOperator(LinearOperator):
     -----
     For multichannel data the ProjectionOperator will broadcast across all channels.
     """
-    def __new__(cls, image_geometry=None, acquisition_geometry=None, \
+    def __new__(cls, image_geometry=None, acquisition_geometry=None, block_norms=False,\
         device='gpu', **kwargs):
         if isinstance(acquisition_geometry, BlockGeometry):
             logging.info("BlockOperator is returned.")
@@ -64,7 +64,7 @@ class ProjectionOperator(LinearOperator):
                     ProjectionOperator_ag(image_geometry=image_geometry, acquisition_geometry=ag, \
                         device=device, **kwargs)
                 )
-            return BlockOperator(*K)
+            return BlockOperator(*K, block_norms=block_norms)
         else:
             logging.info("Standard Operator is returned.")
             return super(ProjectionOperator,

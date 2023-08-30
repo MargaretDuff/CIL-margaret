@@ -79,7 +79,7 @@ class BlockOperator(Operator):
                     'Dimension and size do not match: expected {} got {}'
                     .format(n_elements,len(args)))
         
-        self.block_norms=args.get('block_norms', False)
+        self.block_norms=kwargs.get('block_norms', False)
         # TODO:
         # until a decent way to check equality of Acquisition/Image geometries
         # required to fullfil "Operators in a Block are required to have the same 
@@ -145,25 +145,35 @@ class BlockOperator(Operator):
         '''
         norm = []
         if self.block_norms:
-            all_geoms = [i.range_geometry().shape for i in self.operator]
-
+            all_geoms = [i.range_geometry().shape for i in self.operators]
+            print(all_geoms)
             if all(x == all_geoms[0] for x in all_geoms):
-                norms = [self.operator[0].norm()]*len(self.operator)
-        else:
-            
-            for op in self.operators:
-                if hasattr(op, 'norm'):
-                    norm.append(op.norm(**kwargs) ** 2.)
+                if hasattr(self.operators[0], 'norm'):
+                    norm=[self.operators[0].norm(**kwargs) ** 2.]*len(self.operators)
                 else:
-                    # use Power method
-                    if op.is_linear():
-                        norm.append(
-                                LinearOperator.PowerMethod(op, 20)[0]
-                                )
+                    if self.operators[0].is_linear():
+                        norm=[LinearOperator.PowerMethod(self.operators[0], 20)[0]]*len(self.operators)
                     else:
                         raise TypeError('Operator {} does not have a norm method and is not linear'.format(op))
-            return numpy.sqrt(sum(norm))    
-    
+        
+                
+                return numpy.sqrt(sum(norm))  
+        
+        
+            
+        for op in self.operators:
+            if hasattr(op, 'norm'):
+                norm.append(op.norm(**kwargs) ** 2.)
+            else:
+                # use Power method
+                if op.is_linear():
+                    norm.append(
+                            LinearOperator.PowerMethod(op, 20)[0]
+                            )
+                else:
+                    raise TypeError('Operator {} does not have a norm method and is not linear'.format(op))
+        return numpy.sqrt(sum(norm))    
+
     def direct(self, x, out=None):
         '''Direct operation for the BlockOperator
 
