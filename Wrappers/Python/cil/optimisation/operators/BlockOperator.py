@@ -254,6 +254,42 @@ class BlockOperator(Operator):
                             a += self.get_item(row,col).adjoint(
                                                         x_b.get_item(row),
                                                         )
+                            
+    def append(self, item, axis=0):
+        '''Append operation for the BlockOperator
+
+        Appends a block operator on either axis 0 or axis 1 to return a block operator. 
+
+        
+        Raises: AssertionError if the Block operators have incompatible shapes
+        '''
+        if axis==0:
+            assert(self.shape[1]==item.shape[1], "The original and appended BlockOperators have incompatible shapes, {} and {}, for appending on axis {}.".format(self.shape, item.shape, axis))
+            new_shape=(self.shape[0]+item.shape[0], self.shape[1])
+
+        if axis==1:
+            assert(self.shape[0]==item.shape[0], "The original and appended BlockOperators have incompatible shapes, {} and {}, for appending on axis {}.".format(self.shape, item.shape, axis))
+            new_shape=(self.shape[0], self.shape[1]+item.shape[1])
+
+
+        res=[]
+        if axis==0:
+            for el in self.operators:
+                res.append(el)
+            for el in item.operators:
+                res.append(el)
+        if axis==1:
+            j=0
+            for i,el in enumerate(self.operators):
+                res.append(el)
+                if i//self.shape[1]==self.shape[1]-1:
+                    for _ in range(item.shape[1]):
+                        res.append(item.operators[j])
+                        j+1
+        return(BlockOperator(*res, shape=new_shape))
+
+        
+
     def is_linear(self):
         '''returns whether all the elements of the BlockOperator are linear'''
         return functools.reduce(lambda x, y: x and y.is_linear(), self.operators, True)
