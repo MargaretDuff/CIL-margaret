@@ -263,6 +263,11 @@ class BlockOperator(Operator):
         
         Raises: AssertionError if the Block operators have incompatible shapes
         '''
+        if type(item)!=BlockOperator:
+            try:
+                item=BlockOperator(item)
+            except:
+                TypeError('Item to append should be a BlockOperator')
         if axis==0:
             assert(self.shape[1]==item.shape[1], "The original and appended BlockOperators have incompatible shapes, {} and {}, for appending on axis {}.".format(self.shape, item.shape, axis))
             new_shape=(self.shape[0]+item.shape[0], self.shape[1])
