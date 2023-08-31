@@ -25,6 +25,10 @@ from cil.utilities.multiprocessing import NUM_THREADS
 class BlockDataContainer(object):
     '''Class to hold DataContainers as column vector
     
+    Notice: BlockDatacontainer are only allowed to have the shape of N x 1, with
+    N rows and 1 column.
+
+    
     Provides basic algebra between BlockDataContainer's, DataContainer's and
     subclasses and Numbers
 
@@ -242,6 +246,19 @@ class BlockDataContainer(object):
     def axpby(self, a, b, y, out, dtype=numpy.float32, num_threads = NUM_THREADS):
         '''Deprecated method. Alias of sapyb'''
         return self.sapyb(a,y,b,out,num_threads)
+
+    def append(self, item):#
+        '''Append along the first axis two data containers '''
+        assert numpy.all(self[0].shape== item[0].shape), "Original and appended data containers contain items with shapes, {} and {}, that are not compatible".format(self[0].shape, item[0].shape)
+
+        out=[]
+        for el in self.containers:
+                out.append(el)
+             
+        for el in item.containers:
+                out.append(el)
+
+        return type(self)(*out)
 
 
 
