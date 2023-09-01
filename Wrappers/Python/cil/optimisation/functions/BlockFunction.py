@@ -17,9 +17,10 @@
 # Authors:
 # CIL Developers, listed at: https://github.com/TomographicImaging/CIL/blob/master/NOTICE.txt
 
-from cil.optimisation.functions import Function
+from cil.optimisation.functions import Function, L2NormSquared
 from cil.framework import BlockDataContainer
 from numbers import Number
+
 
 class BlockFunction(Function):
     
@@ -205,5 +206,32 @@ class BlockFunction(Function):
         return BlockFunction( * [ other * el for el in self.functions] )
 
                             
-    
+class BlockL2NormSquared(BlockFunction):
+
+    def __init__(self, **kwargs):
+        '''creator
+
+        Cases considered (with/without data):            
+                a) .. math:: f(x) = \|x\|^{2}_{2} 
+                b) .. math:: f(x) = \|\|x - b\|\|^{2}_{2}
+
+        :param b:  translation of the function
+        :type b: :code:`BlockDataContainer`, optional
+        ''' 
+        self.b = kwargs.get('b',None) 
+        if self.b!=None:
+            self.geometry=self.b.geometry
+            if kwargs.get('geometry',None)!=None:
+                assert(self.geometry==kwargs.get('geometry',None), "Geometries for provided geometry and b do not match")
+        else:
+            self.geometry=kwargs.get('geometry',None) 
+            self.b=[None]*len(self.geometry)
+            if self.geometry==None:
+                ValueError('Need one of b or geometry to be defined')   
+        res=[]
+        for i in range(len(self.geometry.geometries)):
+            res.append(L2NormSquared(b=self.b[i]))
+
+        super(BlockL2NormSquared, self).__init__(*res)
+        
     
