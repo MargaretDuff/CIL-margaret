@@ -32,7 +32,7 @@ class BlockFunction(Function):
     .. math:: F(x_{1}, x_{2}, \cdots, x_{m}) = \overset{m}{\underset{i=1}{\sum}}f_{i}(x_{i}), \mbox{ with } f_{i}: X_{i} \rightarrow (-\infty, \infty].
     
     A nice property (due to it's separability structure) is that the proximal operator 
-    can be decomposed along the proximal operators of each function :math:`f_{i}`.
+    can be decomposed along the proximal functions of each function :math:`f_{i}`.
     
     .. math:: \mathrm{prox}_{\tau F}(x) = ( \mathrm{prox}_{\tau f_{i}}(x_{i}) )_{i=1}^{m}
     
@@ -207,3 +207,26 @@ class BlockFunction(Function):
                             
     
     
+    def append(self, item):
+        '''Append operation for the BlockFunction
+
+        Appends a block operator on either axis 0 or axis 1 to return a block operator. 
+
+        
+        '''
+        if type(item)!=BlockFunction:
+            try:
+                item=BlockFunction(item)
+            except:
+                TypeError('Item to append should be a BlockFunction')
+        
+
+
+        res=[]
+    
+        for el in self.functions:
+            res.append(el)
+        for el in item.functions:
+            res.append(el)
+      
+        return(BlockFunction(*res))

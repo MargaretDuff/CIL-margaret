@@ -249,6 +249,12 @@ class BlockDataContainer(object):
 
     def append(self, item):#
         '''Append along the first axis two data containers '''
+        if type(item)!=BlockDataContainer:
+            try:
+                item=BlockDataContainer(item)
+            except:
+                TypeError('Item to append should be a BlockDataContainer')
+
         assert numpy.all(self[0].shape== item[0].shape), "Original and appended data containers contain items with shapes, {} and {}, that are not compatible".format(self[0].shape, item[0].shape)
 
         out=[]
@@ -258,7 +264,7 @@ class BlockDataContainer(object):
         for el in item.containers:
                 out.append(el)
 
-        return type(self)(*out)
+        return BlockDataContainer(*out)
 
 
 
