@@ -225,7 +225,7 @@ class BlockL2NormSquared(BlockFunction):
                 assert(self.geometry==kwargs.get('geometry',None), "Geometries for provided geometry and b do not match")
         else:
             self.geometry=kwargs.get('geometry',None) 
-            self.b=[None]*len(self.geometry)
+            self.b=[None]*len(self.geometry.geometries)
             if self.geometry==None:
                 ValueError('Need one of b or geometry to be defined')   
         res=[]
