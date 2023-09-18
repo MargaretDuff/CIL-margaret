@@ -291,7 +291,9 @@ class BlockOperator(Operator):
                     for _ in range(item.shape[1]):
                         res.append(item.operators[j])
                         j+1
-        return(BlockOperator(*res, shape=new_shape))
+        self.operators=res
+        self.shape=new_shape
+        return self
 
         
 

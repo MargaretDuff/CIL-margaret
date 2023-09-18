@@ -257,15 +257,13 @@ class BlockDataContainer(object):
 
         assert numpy.all(self[0].shape== item[0].shape), "Original and appended data containers contain items with shapes, {} and {}, that are not compatible".format(self[0].shape, item[0].shape)
 
-        out=[]
-        for el in self.containers:
-                out.append(el)
+      
              
-        for el in item.containers:
-                out.append(el)
-
-        return BlockDataContainer(*out)
-
+   
+        self.containers += item.containers
+        self.shape=(len(self.containers ),1)
+        
+        return self
 
 
     def binary_operations(self, operation, other, *args, **kwargs):

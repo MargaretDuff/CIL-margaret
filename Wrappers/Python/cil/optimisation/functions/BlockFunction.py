@@ -220,13 +220,7 @@ class BlockFunction(Function):
             except:
                 TypeError('Item to append should be a BlockFunction')
         
-
-
-        res=[]
-    
-        for el in self.functions:
-            res.append(el)
-        for el in item.functions:
-            res.append(el)
-      
-        return(BlockFunction(*res))
+        
+        self.functions+=item.functions
+        self.length = len(self.functions)
+        return self
