@@ -17,11 +17,24 @@
 # Authors:
 # CIL Developers, listed at: https://github.com/TomographicImaging/CIL/blob/master/NOTICE.txt
 
-from cil.optimisation.functions import Function
-from cil.framework import DataContainer
+from cil.optimisation.functions import Function, BlockFunction
+from cil.framework import DataContainer, BlockDataContainer
 from cil.optimisation.operators import DiagonalOperator
+import logging
 
-class L2NormSquared(Function):
+class L2NormSquared(): # TODO: Do I want this to import a class? 
+    def __new__(cls, **kwargs):
+        b = kwargs.get('b',None) 
+        if isinstance(b, BlockDataContainer):
+            logging.info("BlockFunction is returned.")
+
+            
+            return L2NormSquared_block(**kwargs)
+        else:
+            logging.info("Standard Function is returned.")
+            return L2NormSquared_func(**kwargs)
+
+class L2NormSquared_func(Function):
     
     r""" L2NormSquared function: :math:`F(x) = \| x\|^{2}_{2} = \underset{i}{\sum}x_{i}^{2}`
           
@@ -51,7 +64,7 @@ class L2NormSquared(Function):
         :param b:  translation of the function
         :type b: :code:`DataContainer`, optional
         '''                        
-        super(L2NormSquared, self).__init__(L = 2)
+        super(L2NormSquared_func, self).__init__(L = 2)
         self.b = kwargs.get('b',None) 
         
                             
@@ -137,6 +150,26 @@ class L2NormSquared(Function):
 
         if out is None:
             return ret
+
+class L2NormSquared_block(BlockFunction):
+
+    def __new__(self, **kwargs):
+        '''creator
+
+        Cases considered (with/without data):            
+                a) .. math:: f(x) = \|x\|^{2}_{2} 
+                b) .. math:: f(x) = \|\|x - b\|\|^{2}_{2}
+
+        :param b:  translation of the function
+        :type b: :code:`BlockDataContainer`, optional
+        ''' 
+        #TODO: do i need any checks here 
+        self.b = kwargs.get('b',None) 
+        res=[]
+        for i in range(len(self.b)):
+            res.append(L2NormSquared_func(b=self.b[i]))
+
+        super().__init__(*res)
 
 
 

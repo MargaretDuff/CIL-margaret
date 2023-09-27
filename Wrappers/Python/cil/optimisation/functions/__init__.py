@@ -27,8 +27,10 @@ from .Function import TranslateFunction
 from .L1Norm import L1Norm, MixedL11Norm
 from .L2NormSquared import L2NormSquared
 from .L2NormSquared import WeightedL2NormSquared
+from .L2NormSquared import L2NormSquared_func
+from .L2NormSquared import L2NormSquared_block
 from .LeastSquares import LeastSquares
-from .BlockFunction import BlockFunction, BlockL2NormSquared
+from .BlockFunction import BlockFunction
 from .OperatorCompositionFunction import OperatorCompositionFunction
 from .MixedL21Norm import MixedL21Norm, SmoothMixedL21Norm
 from .IndicatorBox import IndicatorBox
