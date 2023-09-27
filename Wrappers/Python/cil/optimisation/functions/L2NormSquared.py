@@ -17,7 +17,8 @@
 # Authors:
 # CIL Developers, listed at: https://github.com/TomographicImaging/CIL/blob/master/NOTICE.txt
 
-from cil.optimisation.functions import Function, BlockFunction
+from cil.optimisation.functions import Function
+from cil.optimisation.functions.BlockFunction import BlockFunction #TODO: I am definitely importing this wrong 
 from cil.framework import DataContainer, BlockDataContainer
 from cil.optimisation.operators import DiagonalOperator
 import logging
@@ -153,7 +154,7 @@ class L2NormSquared_func(Function):
 
 class L2NormSquared_block(BlockFunction):
 
-    def __new__(self, **kwargs):
+    def __init__(self, **kwargs):
         '''creator
 
         Cases considered (with/without data):            
@@ -164,12 +165,12 @@ class L2NormSquared_block(BlockFunction):
         :type b: :code:`BlockDataContainer`, optional
         ''' 
         #TODO: do i need any checks here 
-        self.b = kwargs.get('b',None) 
+        b = kwargs.get('b',None) 
         res=[]
-        for i in range(len(self.b)):
-            res.append(L2NormSquared_func(b=self.b[i]))
+        for i in range(len(b)):
+            res.append(L2NormSquared_func(b=b[i]))
 
-        super().__init__(*res)
+        super(L2NormSquared_block, self).__init__(*res)
 
 
 
