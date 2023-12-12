@@ -308,7 +308,15 @@ KullbackLeibler
 
 .. autoclass:: cil.optimisation.functions.KullbackLeibler
    :members:
-   :special-members:
+  
+Depending on the choice of backend, this instantiates another class, either `KullbackLeibler_numpy` or `KullbackLeibler_numba`:
+
+.. autoclass:: cil.optimisation.functions.KullbackLeibler_numpy
+   :members:
+
+.. autoclass:: cil.optimisation.functions.KullbackLeibler_numba
+   :members:
+
 
 L1 Norm
 -------
