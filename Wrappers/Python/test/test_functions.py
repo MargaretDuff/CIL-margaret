@@ -941,7 +941,37 @@ class TestFunction(CCPiTestClass):
                                     rtol=1e-5, atol=1e-5)
 
 
-class TestTotalVariation(unittest.TestCase):
+
+#TODO: why isn't this working 
+        from cil.framework import AcquisitionGeometry, BlockGeometry
+        ag = AcquisitionGeometry.create_Parallel2D()
+        angles = np.linspace(0, 360, 10, dtype=np.float32)
+
+        #default
+        ag.set_angles(angles)
+        ag.set_panel(5)
+
+        ig = ag.get_ImageGeometry()
+        bg = BlockGeometry(ig, ig)
+
+        b = ag.allocate('random', seed=2)
+        func=TotalVariation(backend='c', warm_start=False, max_iteration=10)
+        geom=ig
+        func(ig.allocate(0))
+
+        data = bg.allocate('random')
+        out = func.proximal_conjugate(data, tau=1)
+        out2=bg.allocate('random')
+        func.proximal_conjugate(data, tau=1, out=out2)
+        out3 = data.copy()
+        func.proximal_conjugate(out3, tau=1,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+
+
+
+        
+class TestTotalVariation(CCPiTestClass):
 
     def setUp(self) -> None:
         self.tv = TotalVariation()
@@ -1269,7 +1299,44 @@ class TestTotalVariation(unittest.TestCase):
         for i, x in enumerate(tv._get_p2()):
                 np.testing.assert_allclose(x.as_array(), checkp2[i].as_array(), rtol=1e-8, atol=1e-8, err_msg="P2 not reset to zero after a call to proximal")
  
+    def test_prox_in_place(self):
+        data = dataexample.SIMPLE_PHANTOM_2D.get(size=(128,128))
+        out=data.geometry.allocate('random')
+        TotalVariation().proximal(data, tau=1, out=out)
+        TotalVariation().proximal(data, tau=1, out=data)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), data.as_array())
 
+    def test_prox_in_place2(self):
+        data = dataexample.SIMPLE_PHANTOM_2D.get(size=(128,128))
+        out = TotalVariation().proximal(data, tau=1)
+        out2=data.geometry.allocate('random')
+        TotalVariation().proximal(data, tau=1, out=out2)
+        out3 = data.copy()
+        TotalVariation().proximal(out3, tau=1,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+
+    def test_fista_on_dual_of_rof_in_place1(self):
+        data = dataexample.SIMPLE_PHANTOM_2D.get(size=(128,128))
+        out = TotalVariation()._fista_on_dual_rof(data, tau=1)
+        out2=data.geometry.allocate('random')
+        TotalVariation()._fista_on_dual_rof(data, tau=1, out=out2)
+        out3 = data.copy()
+        TotalVariation()._fista_on_dual_rof(out3, tau=1,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+
+    def test_proj_C_in_place1(self):
+        data = dataexample.SIMPLE_PHANTOM_2D.get(size=(128,128))
+        out = TotalVariation().projection_C(data, tau=1)
+        out2=data.geometry.allocate('random')
+        TotalVariation().projection_C(data, tau=1, out=out2)
+        out3 = data.copy()
+        TotalVariation().projection_C(out3, tau=1,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+
+    
 
 class TestLeastSquares(unittest.TestCase):
 

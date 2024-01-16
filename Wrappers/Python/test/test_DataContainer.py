@@ -1142,7 +1142,20 @@ class TestDataContainer(CCPiTestClass):
         d1.sapyb(a,d2,b,out=d1)
         # 2+1j * [1+0j] -1 * [2]
         numpy.testing.assert_array_equal(1j * numpy.ones_like(d1.as_array()), d1.as_array())
-            
+    
+    def test_sapyb_scalar_in_place(self):
+        # a,b scalar
+        ig = ImageGeometry(10,10)                                               
+        d1 = ig.allocate(1, dtype=numpy.float32)                                                     
+        d2 = ig.allocate(1, dtype=numpy.float32)   
+        a = 3.
+        b = -1.
+
+        d1.sapyb(a,d1,b, out=d1)
+        numpy.testing.assert_array_equal(d1.as_array(), 2*d2.as_array())
+        
+        
+
 
     def test_min(self):
         ig = ImageGeometry(10,10)     
