@@ -93,7 +93,9 @@ class Function(object):
 
         if out is None:
             val = self.proximal(tmp, 1.0/tau)
-        else:            
+        elif id(out)==id(x):   
+            val = self.proximal(tmp, 1.0/tau)
+        else:         
             self.proximal(tmp, 1.0/tau, out = out)
             val = out
                    
@@ -107,6 +109,9 @@ class Function(object):
 
         if out is None:
             return val
+        
+        if id(out)==id(x):
+            out.fill(val.as_array())
 
 
 
@@ -432,6 +437,8 @@ class ScaledFunction(Function):
 
         if out is None:
             val = self.function.proximal(tmp, self.scalar/tau )
+        elif id(out)==id(x):
+            val = self.function.proximal(tmp, self.scalar/tau )
         else:
             self.function.proximal(tmp, self.scalar/tau, out = out)
             val = out     
@@ -446,6 +453,8 @@ class ScaledFunction(Function):
 
         if out is None:
             return val
+        if id(out)==id(x):
+            out.fill(val.as_array())
 
 class SumScalarFunction(SumFunction):
           

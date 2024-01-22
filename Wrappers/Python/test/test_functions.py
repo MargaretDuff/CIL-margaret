@@ -218,8 +218,13 @@ class TestFunction(CCPiTestClass):
         a1 = f.gradient(u)
         a2 = a1 * 0.
         f.gradient(u, out=a2)
+        a3=u.copy()
+        f.gradient(a3, out=a3)
         numpy.testing.assert_array_almost_equal(a1.as_array(),
                                                 a2.as_array(),
+                                                decimal=4)
+        numpy.testing.assert_array_almost_equal(a1.as_array(),
+                                                a3.as_array(),
                                                 decimal=4)
         #numpy.testing.assert_equal(f(u), u.squared_norm())
 
@@ -228,9 +233,14 @@ class TestFunction(CCPiTestClass):
         b1 = f1.gradient(u)
         b2 = b1 * 0.
         f1.gradient(u, out=b2)
+        b3=u.copy()
+        f1.gradient(b3, out=b3)
 
         numpy.testing.assert_array_almost_equal(b1.as_array(),
                                                 b2.as_array(),
+                                                decimal=4)
+        numpy.testing.assert_array_almost_equal(b1.as_array(),
+                                                b3.as_array(),
                                                 decimal=4)
         #numpy.testing.assert_equal(f1(u), (u-b).squared_norm())
 
@@ -239,17 +249,26 @@ class TestFunction(CCPiTestClass):
         e1 = f.proximal(u, tau)
         e2 = e1 * 0.
         f.proximal(u, tau, out=e2)
+        e3=u.copy()
+        f.proximal(e3, tau, out=e3)
         numpy.testing.assert_array_almost_equal(e1.as_array(),
                                                 e2.as_array(),
                                                 decimal=4)
-
+        numpy.testing.assert_array_almost_equal(e1.as_array(),
+                                                e3.as_array(),
+                                                decimal=4)
         # check proximal with data
         tau = 5
         h1 = f1.proximal(u, tau)
         h2 = h1 * 0.
         f1.proximal(u, tau, out=h2)
+        h3=u.copy()
+        f1.proximal(h3, tau, out=h3)
         numpy.testing.assert_array_almost_equal(h1.as_array(),
                                                 h2.as_array(),
+                                                decimal=4)
+        numpy.testing.assert_array_almost_equal(h1.as_array(),
+                                                h3.as_array(),
                                                 decimal=4)
 
         # check proximal conjugate no data
@@ -257,17 +276,27 @@ class TestFunction(CCPiTestClass):
         k1 = f.proximal_conjugate(u, tau)
         k2 = k1 * 0.
         f.proximal_conjugate(u, tau, out=k2)
-
+        k3=u.copy()
+        f.proximal_conjugate(k3, tau, out=k3)
+        
         numpy.testing.assert_array_almost_equal(k1.as_array(),
                                                 k2.as_array(),
                                                 decimal=4)
-
+        numpy.testing.assert_array_almost_equal(k1.as_array(),
+                                                k3.as_array(),
+                                                decimal=4)
+        
         # check proximal conjugate with data
         l1 = f1.proximal_conjugate(u, tau)
         l2 = l1 * 0.
         f1.proximal_conjugate(u, tau, out=l2)
+        l3=u.copy()
+        f1.proximal_conjugate(l3, tau, out=l3)
         numpy.testing.assert_array_almost_equal(l1.as_array(),
                                                 l2.as_array(),
+                                                decimal=4)
+        numpy.testing.assert_array_almost_equal(l1.as_array(),
+                                                l3.as_array(),
                                                 decimal=4)
 
         # check scaled function properties
@@ -299,8 +328,12 @@ class TestFunction(CCPiTestClass):
         w = f_scaled_no_data.proximal(u, tau)
         ww = w * 0
         f_scaled_no_data.proximal(u, tau, out=ww)
+        w3=u.copy()
+        f_scaled_no_data.proximal(w3, tau, out=w3)
         numpy.testing.assert_array_almost_equal(w.as_array(), \
                                                 ww.as_array())
+        numpy.testing.assert_array_almost_equal(w.as_array(), \
+                                                w3.as_array())
 
         # numpy.testing.assert_array_almost_equal(f_scaled_data.proximal(u, tau).as_array(), \
         #                                         f1.proximal(u, tau*scalar).as_array())
@@ -309,13 +342,16 @@ class TestFunction(CCPiTestClass):
         w = f_scaled_no_data.proximal_conjugate(u, tau)
         ww = w * 0
         f_scaled_no_data.proximal_conjugate(u, tau, out=ww)
+        w3=u.copy()
+        f_scaled_no_data.proximal_conjugate(w3, tau, out=w3)
         numpy.testing.assert_array_almost_equal(w.as_array(), \
                                                 ww.as_array(), decimal=4)
-
+        numpy.testing.assert_array_almost_equal(w.as_array(), \
+                                                w3.as_array(), decimal=4)
         # numpy.testing.assert_array_almost_equal(f_scaled_data.proximal_conjugate(u, tau).as_array(), \
         #                                         ((u - tau * b)/(1 + tau/(2*scalar) )).as_array(), decimal=4)
 
-    def test_Norm2sq_as_OperatorCompositionFunction(self):
+    def test_Norm2sq_as_OperatorCompositionFunction(self): #TODO: test in place?? 
         M, N = 50, 50
         ig = ImageGeometry(voxel_num_x=M, voxel_num_y=N)
         #numpy.random.seed(1)
@@ -941,7 +977,7 @@ class TestFunction(CCPiTestClass):
                                     rtol=1e-5, atol=1e-5)
 
 
-class TestTotalVariation(unittest.TestCase):
+class TestTotalVariation(CCPiTestClass):
 
     def setUp(self) -> None:
         self.tv = TotalVariation()
@@ -1269,6 +1305,17 @@ class TestTotalVariation(unittest.TestCase):
         for i, x in enumerate(tv._get_p2()):
                 np.testing.assert_allclose(x.as_array(), checkp2[i].as_array(), rtol=1e-8, atol=1e-8, err_msg="P2 not reset to zero after a call to proximal")
  
+
+
+    def test_prox_in_place2(self): #TODO: this is still broken 
+        data = dataexample.SIMPLE_PHANTOM_2D.get(size=(28,28))
+        out = TotalVariation().proximal(data, tau=1)
+        out2=data.geometry.allocate('random')
+        TotalVariation().proximal(data, tau=1, out=out2)
+        out3 = data.copy()
+        TotalVariation().proximal(out3, tau=1,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
 
 
 class TestLeastSquares(unittest.TestCase):
