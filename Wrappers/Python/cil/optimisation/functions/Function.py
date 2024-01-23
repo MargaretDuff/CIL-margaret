@@ -85,15 +85,16 @@ class Function(object):
         .. math:: \text{prox}_{\tau F^{*}}(x) = x - \tau\text{prox}_{\tau^{-1} F}(\tau^{-1}x)
                 
         """
-        try:
-            tmp = x
-            x.divide(tau, out = tmp)
-        except TypeError:
+        if id(x)==id(out):
             tmp = x.divide(tau, dtype=np.float32)
+        else:
+            try:
+                tmp = x
+                x.divide(tau, out = tmp)
+            except TypeError:
+                tmp = x.divide(tau, dtype=np.float32)
 
         if out is None:
-            val = self.proximal(tmp, 1.0/tau)
-        elif id(out)==id(x):   
             val = self.proximal(tmp, 1.0/tau)
         else:         
             self.proximal(tmp, 1.0/tau, out = out)
@@ -102,16 +103,16 @@ class Function(object):
         if id(tmp) == id(x):
             x.multiply(tau, out = x)
 
-        # CIL issue #1078, cannot use axpby
-        # val.axpby(-tau, 1.0, x, out=val)
-        val.multiply(-tau, out = val)
-        val.add(x, out = val)
+        if id(out) != id(x):
+            val.sapyb(-tau, x, 1.0, out=val)
+        else: 
+            val.sapyb(-tau, tmp, tau, out=val)
+
 
         if out is None:
             return val
         
-        if id(out)==id(x):
-            out.fill(val.as_array())
+
 
 
 
@@ -429,15 +430,16 @@ class ScaledFunction(Function):
     def proximal_conjugate(self, x, tau, out = None):
         r"""This returns the proximal operator for the function at x, tau
         """
-        try:
-            tmp = x
-            x.divide(tau, out = tmp)
-        except TypeError:
+        if id(x)==id(out):
             tmp = x.divide(tau, dtype=np.float32)
+        else:
+            try:
+                tmp = x
+                x.divide(tau, out = tmp)
+            except TypeError:
+                tmp = x.divide(tau, dtype=np.float32)
 
         if out is None:
-            val = self.function.proximal(tmp, self.scalar/tau )
-        elif id(out)==id(x):
             val = self.function.proximal(tmp, self.scalar/tau )
         else:
             self.function.proximal(tmp, self.scalar/tau, out = out)
@@ -445,16 +447,18 @@ class ScaledFunction(Function):
 
         if id(tmp) == id(x):
             x.multiply(tau, out = x)
+        
+        
+        if id(out) != id(x):
+            val.sapyb(-tau, x, 1.0, out=val)
+        else: 
+            val.sapyb(-tau, tmp, tau, out=val)
 
-        # CIL issue #1078, cannot use axpby
-        #val.axpby(-tau, 1.0, x, out=val)
-        val.multiply(-tau, out = val)
-        val.add(x, out = val)
+        
 
         if out is None:
             return val
-        if id(out)==id(x):
-            out.fill(val.as_array())
+
 
 class SumScalarFunction(SumFunction):
           

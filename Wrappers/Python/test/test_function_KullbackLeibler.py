@@ -23,13 +23,14 @@ from cil.framework import ImageGeometry
 import numpy
 import scipy
 from utils import has_numba, initialise_tests
-
+from cil.utilities import dataexample
+from testclass import CCPiTestClass
 initialise_tests()
 
 if has_numba:
     import numba
 
-class TestKullbackLeiblerNumpy(unittest.TestCase):
+class TestKullbackLeiblerNumpy(CCPiTestClass):
     
     def setUp(self):
         
@@ -123,8 +124,77 @@ class TestKullbackLeiblerNumpy(unittest.TestCase):
         res1 = numpy.sum(xlogy) - self.f.eta.dot(self.u1)                
         res2 = self.f.convex_conjugate(self.u1)  
         numpy.testing.assert_equal(res1, res2)   
+        
+    def test_in_place(self):
+        data = self.u1
+        a1=self.f
+  
 
-class TestKullbackLeiblerNumba(unittest.TestCase):
+        #proximal_conjugate 
+        out = a1.proximal_conjugate(data, tau=1)
+        out2=data.geometry.allocate('random')
+        a1.proximal_conjugate(data, tau=1, out=out2)
+        out3 = data.copy()
+        a1.proximal_conjugate(out3, tau=1,   out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+
+        
+        
+        #proximal 
+        out = a1.proximal(data, tau=1)
+        out2=data.geometry.allocate('random')
+        a1.proximal(data, tau=1, out=out2)
+        out3 = data.copy()
+        a1.proximal(out3, tau=1,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array()) 
+        
+        #gradient
+        out = a1.gradient(data)
+        out2=data.geometry.allocate('random')
+        a1.gradient(data,  out=out2)
+        out3 = data.copy()
+        a1.gradient(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
+
+        data = self.u1
+        a1=self.f1
+  
+
+        #proximal_conjugate 
+        out = a1.proximal_conjugate(data, tau=1)
+        out2=data.geometry.allocate('random')
+        a1.proximal_conjugate(data, tau=1, out=out2)
+        out3 = data.copy()
+        a1.proximal_conjugate(out3, tau=1,   out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+
+        
+        
+        #proximal 
+        out = a1.proximal(data, tau=1)
+        out2=data.geometry.allocate('random')
+        a1.proximal(data, tau=1, out=out2)
+        out3 = data.copy()
+        a1.proximal(out3, tau=1,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
+        #gradient
+        out = a1.gradient(data)
+        out2=data.geometry.allocate('random')
+        a1.gradient(data,  out=out2)
+        out3 = data.copy()
+        a1.gradient(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+
+
+class TestKullbackLeiblerNumba(CCPiTestClass):
 
     def setUp(self):
         #numpy.random.seed(1)
@@ -302,6 +372,46 @@ class TestKullbackLeiblerNumba(unittest.TestCase):
                                       f_mask_c.proximal_conjugate(x, tau=tau)) .as_array(), rtol=7e-3)
 
 
+    def test_in_place(self):
+        data = self.u1
+        a1=self.f
+  
+
+        #proximal_conjugate 
+        out = a1.proximal_conjugate(data, tau=1)
+        out2=data.geometry.allocate('random')
+        a1.proximal_conjugate(data, tau=1, out=out2)
+        out3 = data.copy()
+        a1.proximal_conjugate(out3, tau=1,   out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+
+        
+        
+        #proximal 
+        out = a1.proximal(data, tau=1)
+        out2=data.geometry.allocate('random')
+        a1.proximal(data, tau=1, out=out2)
+        out3 = data.copy()
+        a1.proximal(out3, tau=1,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
+        #gradient
+        out = a1.gradient(data)
+        out2=data.geometry.allocate('random')
+        a1.gradient(data,  out=out2)
+        out3 = data.copy()
+        a1.gradient(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
+      
+       #TODO: test the masks 
+        
+        
+        
+        
     def tearDown(self):
         pass                       
                

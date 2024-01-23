@@ -578,14 +578,29 @@ class TestFunction(CCPiTestClass):
         f.proximal_conjugate(u1, tau, out=res_proximal_conj_out)
         numpy.testing.assert_array_almost_equal(
             proxc.as_array(), res_proximal_conj_out.as_array())
+        
+        
+
 
     def test_Rosenbrock(self):
         f = Rosenbrock(alpha=1, beta=100)
-        x = VectorData(numpy.asarray([1, 1]))
+        x = VectorData(numpy.asarray([1.0, 1.0]))
         assert f(x) == 0.
         numpy.testing.assert_array_almost_equal(
             f.gradient(x).as_array(),
             numpy.zeros(shape=(2, ), dtype=numpy.float32))
+
+        
+        #gradient_in_place
+        out = f.gradient(x)
+        out2=x.geometry.allocate('random')
+        f.gradient(x,  out=out2)
+        out3 = x.copy()
+        f.gradient(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
+      
 
     def tests_for_L2NormSq_and_weighted(self):
         numpy.random.seed(1)
@@ -976,6 +991,35 @@ class TestFunction(CCPiTestClass):
             np.testing.assert_allclose(a.as_array(), b.as_array(),
                                     rtol=1e-5, atol=1e-5)
 
+    def test_L1_norm_in_place(self):
+        
+        M, N, K = 2, 3, 5
+        ig = ImageGeometry(voxel_num_x=M, voxel_num_y=N, voxel_num_z=K)
+        data = ig.allocate(ImageGeometry.RANDOM, seed=1)
+
+        a1=L1Norm()
+  
+
+        #proximal_conjugate 
+        out = a1.proximal_conjugate(data, tau=1)
+        out2=data.geometry.allocate('random')
+        a1.proximal_conjugate(data, tau=1, out=out2)
+        out3 = data.copy()
+        a1.proximal_conjugate(out3, tau=1,   out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+
+        
+        
+        #proximal 
+        out = a1.proximal(data, tau=1)
+        out2=data.geometry.allocate('random')
+        a1.proximal(data, tau=1, out=out2)
+        out3 = data.copy()
+        a1.proximal(out3, tau=1,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
 
 class TestTotalVariation(CCPiTestClass):
 
@@ -1307,18 +1351,34 @@ class TestTotalVariation(CCPiTestClass):
  
 
 
-    def test_prox_in_place2(self): #TODO: this is still broken 
+    def test_in_place(self): #TODO: this is still broken 
         data = dataexample.SIMPLE_PHANTOM_2D.get(size=(28,28))
-        out = TotalVariation().proximal(data, tau=1)
+        a1=TotalVariation(warm_start=False, max_iteration=100)
+  
+
+        #proximal_conjugate 
+        out = a1.proximal_conjugate(data, tau=1)
         out2=data.geometry.allocate('random')
-        TotalVariation().proximal(data, tau=1, out=out2)
+        a1.proximal_conjugate(data, tau=1, out=out2)
         out3 = data.copy()
-        TotalVariation().proximal(out3, tau=1,  out=out3)
+        a1.proximal_conjugate(out3, tau=1,   out=out3)
         self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
         self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
 
+        
+        
+        #proximal 
+        out = a1.proximal(data, tau=1)
+        out2=data.geometry.allocate('random')
+        a1.proximal(data, tau=1, out=out2)
+        out3 = data.copy()
+        a1.proximal(out3, tau=1,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
 
-class TestLeastSquares(unittest.TestCase):
+        #TODO: no gradient for TV?? 
+        
+class TestLeastSquares(CCPiTestClass):
 
     def setUp(self) -> None:
         ig = ImageGeometry(10, 2)
@@ -1382,7 +1442,28 @@ class TestLeastSquares(unittest.TestCase):
         twicels.gradient(x, out=y1)
         np.testing.assert_array_almost_equal(constant * y2.as_array(),
                                              y1.as_array())
+    def test_in_place(self):
+        ig = self.ig
+        A = self.A
+        b = ig.allocate(1)
+        data = ig.allocate(3)
+        c = 1.
+        constant = 2.
+        a1 = LeastSquares(A, b, c=c)
+  
+        
+        #proximal is not implemented 
 
+        
+        #gradient
+        out = a1.gradient(data)
+        out2=data.geometry.allocate('random')
+        a1.gradient(data,  out=out2)
+        out3 = data.copy()
+        a1.gradient(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
 
 # tests for OperatorCompositionFunction
 class TestOperatorCompositionFunctionWithWrongInterfaceFunction(
@@ -1581,7 +1662,7 @@ class TestBlockFunction(unittest.TestCase):
         assert isinstance(bf[0], ScaledFunction)
 
 
-class TestIndicatorBox(unittest.TestCase):
+class TestIndicatorBox(CCPiTestClass):
 
     def _test_IndicatorBox(self, accelerated):
         ig = ImageGeometry(10, 10)
@@ -1892,3 +1973,28 @@ class TestIndicatorBox(unittest.TestCase):
             N = 10
             ib.set_num_threads(N)
             assert ib.num_threads == N
+
+    def test_in_place(self): #TODO: this is still broken 
+        data = dataexample.SIMPLE_PHANTOM_2D.get(size=(28,28))
+        a1=IndicatorBox()
+  
+
+        #proximal_conjugate 
+        out = a1.proximal_conjugate(data, tau=1)
+        out2=data.geometry.allocate('random')
+        a1.proximal_conjugate(data, tau=1, out=out2)
+        out3 = data.copy()
+        a1.proximal_conjugate(out3, tau=1,   out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+
+        
+        
+        #proximal 
+        out = a1.proximal(data, tau=1)
+        out2=data.geometry.allocate('random')
+        a1.proximal(data, tau=1, out=out2)
+        out3 = data.copy()
+        a1.proximal(out3, tau=1,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())

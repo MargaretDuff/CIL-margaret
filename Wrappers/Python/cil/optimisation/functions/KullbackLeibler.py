@@ -192,8 +192,12 @@ class KullbackLeibler_numpy(KullbackLeibler):
         
         if out is None:        
             return 0.5 *( (x - self.eta - tau) + \
-                ( (x + self.eta - tau).power(2) + 4*tau*self.b   ) .sqrt() \
-                    )        
+                ( (x + self.eta - tau).power(2) + 4*tau*self.b   ) .sqrt() )
+        
+        elif id(out)==id(x):# TODO: Optimisation here
+            (x - self.eta - tau).add(( (x + self.eta - tau).power(2) + 4*tau*self.b ) .sqrt(), out=out)
+            out *= 0.5     
+                         
         else:                      
             x.add(self.eta, out=out)
             out -= tau
