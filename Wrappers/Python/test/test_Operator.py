@@ -58,8 +58,8 @@ class TestOperator(CCPiTestClass):
         
         b = vg.allocate('random')
         
-        out1 = A.range_geometry().allocate()
-        out2 = A.domain_geometry().allocate()
+        out1 = A.range_geometry().allocate('random')
+        out2 = A.domain_geometry().allocate('random')
         
         res1 = A.direct(b)
         res2 = numpy.dot(A.A, b.as_array())
@@ -75,6 +75,35 @@ class TestOperator(CCPiTestClass):
         A.adjoint(res1, out = out2)
         self.assertNumpyArrayAlmostEqual(res3.as_array(), out2.as_array(), decimal=4)
     
+    def test_matrix_operator_in_place(self):
+        m = 30
+        n = 30
+        
+        vg = VectorGeometry(n)
+        
+        Amat = numpy.random.randn(m, n)
+        A = MatrixOperator(Amat)
+        
+        data = vg.allocate('random')
+        
+        out = A.direct(data)
+        out2=data.geometry.allocate('random')
+        A.direct(data,  out=out2)
+        out3 = data.copy()
+        A.direct(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
+        
+        out = A.adjoint(data)
+        out2=data.geometry.allocate('random')
+        A.adjoint(data,  out=out2)
+        out3 = data.copy()
+        A.adjoint(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
+        
     def test_ZeroOperator(self):
         ig = ImageGeometry(10,20,30)
         img = ig.allocate(3)
@@ -90,14 +119,67 @@ class TestOperator(CCPiTestClass):
         self.assertNumpyArrayEqual(op2.adjoint(img2).array,out.array)
         self.assertEqual(op2.calculate_norm(),0)
 
+
+    def test_ZeroOperator_in_place(self):
+        ig = ImageGeometry(5,15,25)
+        data = ig.allocate(3)
+        sol=ig.allocate(0)
+        A=ZeroOperator(ig)
+    
+        
+        out = A.direct(data)
+        out2=data.geometry.allocate('random')
+        A.direct(data,  out=out2)
+        out3 = data.copy()
+        A.direct(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out3.as_array(), sol.as_array())
+        
+        
+        out = A.adjoint(data)
+        out2=data.geometry.allocate('random')
+        A.adjoint(data,  out=out2)
+        out3 = data.copy()
+        A.adjoint(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out3.as_array(), sol.as_array())
+    
+    
     def test_ScaledOperator(self):
         ig = ImageGeometry(10,20,30)
-        img = ig.allocate()
+        img = ig.allocate('random')
         scalar = 0.5
         sid = scalar * IdentityOperator(ig)
         numpy.testing.assert_array_equal(scalar * img.as_array(), sid.direct(img).as_array())
     
+    def test_ScaledOperator_in_place(self):
+        ig = ImageGeometry(10,20,30)
+        data= ig.allocate('random')
+        scalar = 0.5
+        A = scalar * IdentityOperator(ig)
+        sol=scalar * data
 
+        out = A.direct(data)
+        out2=data.geometry.allocate('random')
+        A.direct(data,  out=out2)
+        out3 = data.copy()
+        A.direct(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out3.as_array(), sol.as_array())
+        
+        
+        out = A.adjoint(data)
+        out2=data.geometry.allocate('random')
+        A.adjoint(data,  out=out2)
+        out3 = data.copy()
+        A.adjoint(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out3.as_array(), sol.as_array())
+        
     def test_DiagonalOperator(self):
         M = 3
         ig = ImageGeometry(M, M)
@@ -126,6 +208,35 @@ class TestOperator(CCPiTestClass):
         numpy.testing.assert_almost_equal(norm1, numpy.max(numpy.abs(diag.array)))        
 
     
+    def test_DiagonalOperator_in_place(self):
+        M = 4
+        ig = ImageGeometry(M, M)
+        data = ig.allocate('random',seed=100)
+        diag = ig.allocate('random',seed=101)
+        
+        # Set up example DiagonalOperator
+        A = DiagonalOperator(diag)
+        sol=(diag*data)
+        
+        out = A.direct(data)
+        out2=data.geometry.allocate('random')
+        A.direct(data,  out=out2)
+        out3 = data.copy()
+        A.direct(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out3.as_array(), sol.as_array())
+        
+        
+        out = A.adjoint(data)
+        out2=data.geometry.allocate('random')
+        A.adjoint(data,  out=out2)
+        out3 = data.copy()
+        A.adjoint(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out3.as_array(), sol.as_array())
+        
     def test_MaskOperator(self):
         M = 3
         ig = ImageGeometry(M, M)
@@ -146,7 +257,39 @@ class TestOperator(CCPiTestClass):
         y = MO.adjoint(z)
         numpy.testing.assert_array_equal(y.as_array(), (mask*(mask*x)).as_array())
         
-
+    def test_MaskOperator_in_place(self):
+        M = 5
+        ig = ImageGeometry(M, M)
+        data = ig.allocate('random',seed=100)
+        
+        mask = ig.allocate(True,dtype=bool)
+        amask = mask.as_array()
+        amask[2,1:3] = False
+        amask[0,0] = False
+        A= MaskOperator(mask)
+        sol=mask*data
+        
+        out = A.direct(data)
+        out2=data.geometry.allocate('random')
+        A.direct(data,  out=out2)
+        out3 = data.copy()
+        A.direct(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out3.as_array(), sol.as_array())
+        
+        
+        out = A.adjoint(data)
+        out2=data.geometry.allocate('random')
+        A.adjoint(data,  out=out2)
+        out3 = data.copy()
+        A.adjoint(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out3.as_array(), sol.as_array())
+        
+        
+    
     def test_ChannelwiseOperator(self):
         M = 3
         channels = 4
@@ -160,26 +303,59 @@ class TestOperator(CCPiTestClass):
         
         y = C.direct(x)
         
-        y2 = ig.allocate()
+        y2 = ig.allocate('random')
         C.direct(x,y2)
         
         for c in range(channels):
-            numpy.testing.assert_array_equal(y.get_slice(channel=2).as_array(), \
-                                             (diag*x.get_slice(channel=2)).as_array())
-            numpy.testing.assert_array_equal(y2.get_slice(channel=2).as_array(), \
-                                             (diag*x.get_slice(channel=2)).as_array())
+            numpy.testing.assert_array_equal(y.get_slice(channel=c).as_array(), \
+                                             (diag*x.get_slice(channel=c)).as_array())
+            numpy.testing.assert_array_equal(y2.get_slice(channel=c).as_array(), \
+                                             (diag*x.get_slice(channel=c)).as_array())
         
         
         z = C.adjoint(y)
         
-        z2 = ig.allocate()
+        z2 = ig.allocate('random')
         C.adjoint(y,z2)
         
         for c in range(channels):
-            numpy.testing.assert_array_equal(z.get_slice(channel=2).as_array(), \
-                                             (diag*(diag*x.get_slice(channel=2))).as_array())
-            numpy.testing.assert_array_equal(z2.get_slice(channel=2).as_array(), \
-                                             (diag*(diag*x.get_slice(channel=2))).as_array())
+            numpy.testing.assert_array_equal(z.get_slice(channel=c).as_array(), \
+                                             (diag*(diag*x.get_slice(channel=c))).as_array())
+            numpy.testing.assert_array_equal(z2.get_slice(channel=c).as_array(), \
+                                             (diag*(diag*x.get_slice(channel=c))).as_array())
+        
+        
+    def test_ChannelwiseOperator_in_place(self):
+        M = 4
+        channels = 3
+        ig = ImageGeometry(M, M, channels=channels)
+        igs = ImageGeometry(M, M)
+        data = ig.allocate('random',seed=100)
+        diag = igs.allocate('random',seed=101)
+        
+        D = DiagonalOperator(diag)
+        A = ChannelwiseOperator(D,channels)
+        
+        
+        out = A.direct(data)
+        out2=data.geometry.allocate('random')
+        A.direct(data,  out=out2)
+        out3 = data.copy()
+        A.direct(out3,  out=out3)
+        for c in range(channels):
+            self.assertNumpyArrayAlmostEqual(out.get_slice(channel=c).as_array(), (diag*data.get_slice(channel=c)).as_array())
+            self.assertNumpyArrayAlmostEqual(out2.get_slice(channel=c).as_array(), (diag*data.get_slice(channel=c)).as_array())
+            self.assertNumpyArrayAlmostEqual(out3.get_slice(channel=c).as_array(), (diag*data.get_slice(channel=c)).as_array())
+        
+        
+        out = A.adjoint(data)
+        out2=data.geometry.allocate('random')
+        A.adjoint(data,  out=out2)
+        out3 = data.copy()
+        A.adjoint(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.get_slice(channel=c).as_array(), (diag*data.get_slice(channel=c)).as_array())
+        self.assertNumpyArrayAlmostEqual(out2.get_slice(channel=c).as_array(), (diag*data.get_slice(channel=c)).as_array())
+        self.assertNumpyArrayAlmostEqual(out3.get_slice(channel=c).as_array(), (diag*data.get_slice(channel=c)).as_array())
         
         
     def test_BlurringOperator(self):
@@ -202,10 +378,47 @@ class TestOperator(CCPiTestClass):
         # Run dot test to check validity of adjoint.
         self.assertTrue(BOP.dot_test(BOP))
 
+    def test_BlurringOperator_in_place(self):
+        ig = ImageGeometry(50,50)
+        
+        # Parameters for point spread function PSF (size and std)
+        ks          = 6; 
+        ksigma      = 3.0
+        
+        # Create 1D PSF and 2D as outer product, then normalise.
+        w           = numpy.exp(-numpy.arange(-(ks-1)/2,(ks-1)/2+1)**2/(2*ksigma**2))
+        w.shape     = (ks,1)
+        PSF         = w*numpy.transpose(w)
+        PSF         = PSF/(PSF**2).sum()
+        PSF         = PSF/PSF.sum()
+        
+        # Create blurring operator
+        A = BlurringOperator(PSF,ig)
 
+
+        data = ig.allocate('random')
+        
+        out = A.direct(data)
+        out2=data.geometry.allocate('random')
+        A.direct(data,  out=out2)
+        out3 = data.copy()
+        A.direct(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
+        
+        out = A.adjoint(data)
+        out2=data.geometry.allocate('random')
+        A.adjoint(data,  out=out2)
+        out3 = data.copy()
+        A.adjoint(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
+        
     def test_IdentityOperator(self):
         ig = ImageGeometry(10,20,30)
-        img = ig.allocate()
+        img = ig.allocate('random')
         # img.fill(numpy.ones((30,20,10)))
         self.assertTrue(img.shape == (30,20,10))
         #self.assertEqual(img.sum(), 2*float(10*20*30))
@@ -215,6 +428,32 @@ class TestOperator(CCPiTestClass):
         numpy.testing.assert_array_equal(y.as_array(), img.as_array())
 
 
+    def test_IdentityOperator_in_place(self):
+        ig = ImageGeometry(10,20,10)
+        data= ig.allocate('random')
+        A = IdentityOperator(ig)
+        sol=data.copy()
+        
+        out = A.direct(data)
+        out2=data.geometry.allocate('random')
+        A.direct(data,  out=out2)
+        out3 = data.copy()
+        A.direct(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out3.as_array(), sol.as_array())
+        
+        
+        out = A.adjoint(data)
+        out2=data.geometry.allocate('random')
+        A.adjoint(data,  out=out2)
+        out3 = data.copy()
+        A.adjoint(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), sol.as_array())
+        self.assertNumpyArrayAlmostEqual(out3.as_array(), sol.as_array())
+        
+    
     def test_FiniteDifference(self):
         N, M = 2, 3
         numpy.random.seed(1)
@@ -240,14 +479,14 @@ class TestOperator(CCPiTestClass):
         G = GradientOperator(ig)
 
         u = G.range_geometry().allocate(ImageGeometry.RANDOM)
-        res = G.domain_geometry().allocate()
+        res = G.domain_geometry().allocate('random')
         G.adjoint(u, out=res)
         w = G.adjoint(u)
 
         self.assertNumpyArrayEqual(res.as_array(), w.as_array())
         
         u = G.domain_geometry().allocate(ImageGeometry.RANDOM)
-        res = G.range_geometry().allocate()
+        res = G.range_geometry().allocate('random')
         G.direct(u, out=res)
         w = G.direct(u)
         self.assertBlockDataContainerEqual(res, w)
@@ -290,6 +529,87 @@ class TestOperator(CCPiTestClass):
             numpy.testing.assert_almost_equal(res1b.as_array(), res2b.as_array()) 
             
 
+    def test_FiniteDifference_in_place(self):
+        N, M = 4, 3
+        numpy.random.seed(1)
+        ig = ImageGeometry(N, M)
+        Id = IdentityOperator(ig)
+
+        A= FiniteDifferenceOperator(ig, direction = 0, bnd_cond = 'Neumann') #TODO: need to check for the different methods? Not tested anywhere?? 
+        data = A.domain_geometry().allocate('random')       
+        
+        out = A.direct(data)
+        out2=data.geometry.allocate('random')
+        A.direct(data,  out=out2)
+        out3 = data.copy()
+        A.direct(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
+        
+        out = A.adjoint(data)
+        out2=data.geometry.allocate('random')
+        A.adjoint(data,  out=out2)
+        out3 = data.copy()
+        A.adjoint(out3,  out=out3)
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+        self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+
+
+        
+        # 2D       
+        M, N = 5, 3
+        ig = ImageGeometry(voxel_num_x=M, voxel_num_y=N, voxel_size_x=0.1, voxel_size_y=0.4)
+        data = ig.allocate('random')
+                
+        
+        for i in range(2):
+            A = FiniteDifferenceOperator(ig, direction=i)    
+            out = A.direct(data)
+            out2=data.geometry.allocate('random')
+            A.direct(data,  out=out2)
+            out3 = data.copy()
+            A.direct(out3,  out=out3)
+            self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+            self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+            
+            
+            out = A.adjoint(data)
+            out2=data.geometry.allocate('random')
+            A.adjoint(data,  out=out2)
+            out3 = data.copy()
+            A.adjoint(out3,  out=out3)
+            self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+            self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+            
+        # 2D  + chan     
+        M, N, K = 2,4,3
+        ig1 = ImageGeometry(voxel_num_x=M, voxel_num_y=N, channels=K, voxel_size_x=0.1, voxel_size_y=0.4)
+        data = ig1.allocate('random')
+        
+        
+        for i in range(3):
+            A= FiniteDifferenceOperator(ig1, direction=i) 
+               
+            out = A.direct(data)
+            out2=data.geometry.allocate('random')
+            A.direct(data,  out=out2)
+            out3 = data.copy()
+            A.direct(out3,  out=out3)
+            self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+            self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+            
+            
+            out = A.adjoint(data)
+            out2=data.geometry.allocate('random')
+            A.adjoint(data,  out=out2)
+            out3 = data.copy()
+            A.adjoint(out3,  out=out3)
+            self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+            self.assertNumpyArrayAlmostEqual(out2.as_array(), out3.as_array())
+        
+        
+        
     def test_PowerMethod(self):
         # 2x2 real matrix, dominant eigenvalue = 2
         M1 = numpy.array([[1,0],[1,2]], dtype=float)
@@ -455,7 +775,7 @@ class TestOperator(CCPiTestClass):
                 pass      
 
         # Check if adjoint is correct
-
+        
         bg = BlockGeometry(ig1, ig2, ig3, ig1, ig2, ig3)
         x = ig1.allocate(20)
 
@@ -469,7 +789,7 @@ class TestOperator(CCPiTestClass):
 
         for i in range(len(bg.geometries)):
             if i!=index:
-                numpy.testing.assert_array_almost_equal(res1[i].as_array(), bg.geometries[i].allocate().as_array())   
+                numpy.testing.assert_array_almost_equal(res1[i].as_array(), bg.geometries[i].allocate('random').as_array())   
 
         # Check error messages
         # Check if index is correct wrt length of Cartesian Product
@@ -484,6 +804,31 @@ class TestOperator(CCPiTestClass):
             proj_map = ProjectionMap(ig, index)                
             
     
+    def test_ProjectionMap_in_place(self):
+         # Check if adjoint is correct
+        ig1 = ImageGeometry(3,4)
+        ig2 = ImageGeometry(5,6)
+        ig3 = ImageGeometry(5,6,4)
+        bg = BlockGeometry(ig1, ig2, ig3, ig1, ig2, ig3)
+        data=bg.allocate('random')
+        
+        index=3
+        A = ProjectionMap(bg, index)
+        
+        
+        out = A.direct(data)
+        out2=out.geometry.allocate('random')
+        A.direct(data,  out=out2)
+
+        self.assertNumpyArrayAlmostEqual(out.as_array(), out2.as_array())
+          
+        data = ig1.allocate(20)
+        out = A.adjoint(data)
+        out2=bg.allocate('random')
+        A.adjoint(data,  out=out2)
+        for i in range(3):
+            self.assertNumpyArrayAlmostEqual(out.get_item(i).as_array(), out2.get_item(i).as_array())
+        #TODO:error here 
 class TestGradients(CCPiTestClass): 
     def setUp(self):
         N, M = 20, 30
@@ -623,7 +968,7 @@ class TestBlockOperator(CCPiTestClass):
         u = ig.allocate('random')
         z1 = B.direct(u)
         
-        res = B.range_geometry().allocate()
+        res = B.range_geometry().allocate('random')
         #res = z1.copy()
         B.direct(u, out=res)
         
@@ -632,14 +977,14 @@ class TestBlockOperator(CCPiTestClass):
         z1 = B.range_geometry().allocate(ImageGeometry.RANDOM)
 
         res1 = B.adjoint(z1)
-        res2 = B.domain_geometry().allocate()
+        res2 = B.domain_geometry().allocate('random')
         B.adjoint(z1, out=res2)
         
         self.assertNumpyArrayEqual(res1.as_array(), res2.as_array())
 
         BB = BlockOperator( Id, 2 * Id)
         B = BlockOperator( BB, Id )
-        v = B.domain_geometry().allocate()
+        v = B.domain_geometry().allocate('random')
         B.adjoint(res,out=v)
         vv = B.adjoint(res)
         el1 = B.get_item(0,0).adjoint(z1.get_item(0)) +\
@@ -665,7 +1010,7 @@ class TestBlockOperator(CCPiTestClass):
 
         x1 = BB.adjoint(z1)
         
-        res1 = BB.domain_geometry().allocate()
+        res1 = BB.domain_geometry().allocate('random')
         BB.adjoint(z1, out=res1)
         self.assertNumpyArrayEqual(x1.as_array(),
                                    res1.as_array())
@@ -686,7 +1031,7 @@ class TestBlockOperator(CCPiTestClass):
                                    3 * u.as_array())
         self.assertNumpyArrayEqual(z1.get_item(1).as_array(),
                                    4 * u.as_array())
-        res = B.range_geometry().allocate()
+        res = B.range_geometry().allocate('random')
         B.direct(U, out=res)
         self.assertNumpyArrayEqual(res.get_item(0).as_array(),
                                    3 * u.as_array())
@@ -700,7 +1045,7 @@ class TestBlockOperator(CCPiTestClass):
         el2 = B.get_item(0,1).adjoint(z1.get_item(0)) + B.get_item(1,1).adjoint(z1.get_item(1)) 
 
         shape = B.get_output_shape(z1.shape, adjoint=True)
-        out = B.domain_geometry().allocate()
+        out = B.domain_geometry().allocate('random')
         
         for col in range(B.shape[1]):
             for row in range(B.shape[0]):
@@ -715,7 +1060,7 @@ class TestBlockOperator(CCPiTestClass):
         self.assertNumpyArrayEqual(out.get_item(1).as_array(),
                                    10 * u.as_array())
         
-        res2 = B.domain_geometry().allocate()  
+        res2 = B.domain_geometry().allocate('random')  
         #print (res2, res2.as_array())  
         B.adjoint(z1, out = res2)
         
@@ -732,7 +1077,7 @@ class TestBlockOperator(CCPiTestClass):
         B1 = BlockOperator(G, Id)
         U = ig.allocate(ImageGeometry.RANDOM)
         #U = BlockDataContainer(u,u)
-        RES1 = B1.range_geometry().allocate()
+        RES1 = B1.range_geometry().allocate('random')
         
         Z1 = B1.direct(U)
         B1.direct(U, out = RES1)
@@ -757,7 +1102,7 @@ class TestBlockOperator(CCPiTestClass):
         i = 0
         n = 10.
         t1 = t2 = 0
-        res = B.range_geometry().allocate()
+        res = B.range_geometry().allocate('random')
             
         while (i < n):
             steps.append(timer())
@@ -781,7 +1126,7 @@ class TestBlockOperator(CCPiTestClass):
         i = 0
         #n = 50.
         t1 = t2 = 0
-        resd = B.domain_geometry().allocate()
+        resd = B.domain_geometry().allocate('random')
         z1 = B.direct(u)
         #B.adjoint(z1, out=resd)
         

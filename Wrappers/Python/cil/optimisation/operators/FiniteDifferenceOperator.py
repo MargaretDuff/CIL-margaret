@@ -86,7 +86,10 @@ class FiniteDifferenceOperator(LinearOperator):
 
     def direct(self, x, out = None):
         
-        x_asarr = x.as_array()
+        if id(x)==id(out):
+            x_asarr=x.copy().as_array()
+        else:
+            x_asarr = x.as_array()
         
         outnone = False
         if out is None:
@@ -228,7 +231,10 @@ class FiniteDifferenceOperator(LinearOperator):
         
         # Adjoint operation defined as  
                       
-        x_asarr = x.as_array()
+        if id(x)==id(out):
+            x_asarr=x.copy().as_array()
+        else:
+            x_asarr=x.as_array()
 
         outnone = False 
         if out is None:
