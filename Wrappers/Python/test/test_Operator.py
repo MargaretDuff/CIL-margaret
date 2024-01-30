@@ -118,57 +118,91 @@ class TestOperator(CCPiTestClass):
             (ProjectionMap(bg, index=2) , bg, ig3) 
         ]        
         
+        error_list=[]
+        
         for a in operator_geom_test_list:
-            print(a[0])
-            self.operator_in_place_test(*a)
-            
+            try:
+                self.operator_in_place_test(*a)
+            except AssertionError as e:
+                    error_list.append(e)
+                    
+        if len(error_list)!=0:
+            error_string=''
+            for i in range(len(error_list)):
+                error_string+= str(error_list[i])+'\n'
+            raise AssertionError(error_string)
+        
     def operator_in_place_test(self, operator, input_geom, output_geom=None):
+        
         if output_geom is None:
             output_geom=input_geom
             in_out_same=True
         else:
             in_out_same=False
 
-    
+        error_list=[]
             
         data=input_geom.allocate('random')
         out = operator.direct(data)
         out2=output_geom.allocate('random')
         operator.direct(data,  out=out2)
-        if isinstance(output_geom, BlockGeometry):
-            for i in range(len(output_geom.geometries)):
-                numpy.testing.assert_array_almost_equal(out[i].as_array(), out2[i].as_array(), err_msg='Failed for case  operator.direct(data,  out=out) where operator is \n' +str(type(operator)) + '\n and input geometry is \n'+ str(type(input_geom)) + '\n output geometry is \n'+ str(type(output_geom)))
-        else:
-            numpy.testing.assert_array_almost_equal(out.as_array(), out2.as_array(), err_msg='Failed for case  operator.direct(data,  out=out) where operator is \n' +str(type(operator)) + '\n and input geometry is \n'+ str(type(input_geom)) + '\n output geometry is \n'+ str(type(output_geom)))
+        
+        try:
+            if isinstance(output_geom, BlockGeometry):
+                for i in range(len(output_geom.geometries)):
+                    numpy.testing.assert_array_almost_equal(out[i].as_array(), out2[i].as_array(), err_msg='Failed for case  operator.direct(data,  out=out) where operator is \n' +str(type(operator)) + '\n and input geometry is \n'+ str(type(input_geom)) + '\n output geometry is \n'+ str(type(output_geom)))
+            else:
+                numpy.testing.assert_array_almost_equal(out.as_array(), out2.as_array(), err_msg='Failed for case  operator.direct(data,  out=out) where operator is \n' +str(type(operator)) + '\n and input geometry is \n'+ str(type(input_geom)) + '\n output geometry is \n'+ str(type(output_geom)))
+        
+        except AssertionError as e: 
+            error_list.append(e)    
+        
         if in_out_same:
             out3 = data.copy()
             operator.direct(out3,  out=out3)
-            if isinstance(output_geom, BlockGeometry):
-                for i in range(len(output_geom.geometries)):
-                    numpy.testing.assert_array_almost_equal(out2[i].as_array(), out3[i].as_array(),err_msg='Failed for case  operator.direct(data,  out=data) where operator is \n' +str(type(operator)) + '\n and geometry is' + str(type(input_geom)) )
-            else:
-                numpy.testing.assert_array_almost_equal(out2.as_array(), out3.as_array(),err_msg='Failed for case  operator.direct(data,  out=data) where operator is \n' +str(type(operator)) + '\n and geometry is' + str(type(input_geom)) )
-        
+            try:
+                if isinstance(output_geom, BlockGeometry):
+                    for i in range(len(output_geom.geometries)):
+                        numpy.testing.assert_array_almost_equal(out[i].as_array(), out3[i].as_array(),err_msg='Failed for case  operator.direct(data,  out=data) where operator is \n' +str(type(operator)) + '\n and geometry is' + str(type(input_geom)) )
+                else:
+                    numpy.testing.assert_array_almost_equal(out.as_array(), out3.as_array(),err_msg='Failed for case  operator.direct(data,  out=data) where operator is \n' +str(type(operator)) + '\n and geometry is' + str(type(input_geom)) )
+            
+            except AssertionError as e: 
+                error_list.append(e)  
+                
         data=output_geom.allocate('random')
         out = operator.adjoint(data)
         out2=input_geom.allocate('random')
         operator.adjoint(data,  out=out2)
-        if isinstance(input_geom, BlockGeometry):
-                for i in range(len(input_geom.geometries)):
-                    numpy.testing.assert_array_almost_equal(out[i].as_array(), out2[i].as_array(), err_msg='Failed for case  operator.adjoint(data,  out=out) where operator is \n' +str(type(operator)) + '\n and input geometry is \n'+ str(type(input_geom)) + '\n output geometry is \n'+ str(type(output_geom)))
-        else:
-                numpy.testing.assert_array_almost_equal(out.as_array(), out2.as_array(), err_msg='Failed for case  operator.adjoint(data,  out=out) where operator is \n' +str(type(operator)) + '\n and input geometry is \n'+ str(type(input_geom)) + '\n output geometry is \n'+ str(type(output_geom)))
+        
+        try:
+            if isinstance(input_geom, BlockGeometry):
+                    for i in range(len(input_geom.geometries)):
+                        numpy.testing.assert_array_almost_equal(out[i].as_array(), out2[i].as_array(), err_msg='Failed for case  operator.adjoint(data,  out=out) where operator is \n' +str(type(operator)) + '\n and input geometry is \n'+ str(type(input_geom)) + '\n output geometry is \n'+ str(type(output_geom)))
+            else:
+                    numpy.testing.assert_array_almost_equal(out.as_array(), out2.as_array(), err_msg='Failed for case  operator.adjoint(data,  out=out) where operator is \n' +str(type(operator)) + '\n and input geometry is \n'+ str(type(input_geom)) + '\n output geometry is \n'+ str(type(output_geom)))
+        except AssertionError as e: 
+                error_list.append(e)  
+            
         if in_out_same:
             out3 = data.copy()
             operator.adjoint(out3,  out=out3)
-            if isinstance(input_geom, BlockGeometry):
-                    for i in range(len(input_geom.geometries)):
-                        numpy.testing.assert_array_almost_equal(out2[i].as_array(), out3[i].as_array(),err_msg='Failed for case  operator.adjoint(data,  out=data) where operator is \n' +str(type(operator)) + '\n and geometry is' + str(type(input_geom)) )
-            else:
-                    numpy.testing.assert_array_almost_equal(out2.as_array(), out3.as_array(),err_msg='Failed for case  operator.adjoint(data,  out=data) where operator is \n' +str(type(operator)) + '\n and geometry is' + str(type(input_geom)) )
+            try:
+                if isinstance(input_geom, BlockGeometry):
+                        for i in range(len(input_geom.geometries)):
+                            numpy.testing.assert_array_almost_equal(out[i].as_array(), out3[i].as_array(),err_msg='Failed for case  operator.adjoint(data,  out=data) where operator is \n' +str(type(operator)) + '\n and geometry is' + str(type(input_geom)) )
+                else:
+                        numpy.testing.assert_array_almost_equal(out.as_array(), out3.as_array(),err_msg='Failed for case  operator.adjoint(data,  out=data) where operator is \n' +str(type(operator)) + '\n and geometry is' + str(type(input_geom)) )
             
+            except AssertionError as e: 
+                error_list.append(e)      
             
-
+        if len(error_list)!=0:
+            error_string=''
+            for i in range(len(error_list)):
+                error_string+= str(error_list[i])+'\n'
+            raise AssertionError(error_string)
+        
     def test_MatrixOperator(self):        
         m = 30
         n = 20
