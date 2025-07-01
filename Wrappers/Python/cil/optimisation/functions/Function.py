@@ -182,7 +182,6 @@ class Function(object):
         """ Return the negative of the function """
         return -1 * self
 
-
     def centered_at(self, center):
         """ Returns a translated function, namely if we have a function :math:`F(x)` the center is at the origin.
             TranslateFunction is :math:`F(x - b)` and the center is at point b.
@@ -874,3 +873,5 @@ class TranslateFunction(Function):
         """
 
         return self.function.convex_conjugate(x) + self.center.dot(x)
+
+
