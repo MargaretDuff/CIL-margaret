@@ -739,6 +739,13 @@ We also have a number of already provided pre-conditioners
 .. autoclass:: cil.optimisation.utilities.preconditioner.AdaptiveSensitivity
    :members:
 
+.. autoclass:: cil.optimisation.utilities.preconditioner.AdaGrad
+   :members:
+
+.. autoclass:: cil.optimisation.utilities.preconditioner.Adam
+   :members:
+
+
 Block Framework
 ***************
 
