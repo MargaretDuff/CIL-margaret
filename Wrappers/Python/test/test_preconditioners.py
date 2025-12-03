@@ -4,7 +4,11 @@ from cil.optimisation.functions import LeastSquares, IndicatorBox
 from cil.framework import ImageGeometry, VectorGeometry
 from cil.optimisation.operators import IdentityOperator, MatrixOperator
 
+<<<<<<< HEAD
 from cil.optimisation.utilities import Sensitivity, AdaptiveSensitivity, Adam, AdaGrad, Preconditioner
+=======
+from cil.optimisation.utilities import Sensitivity, AdaptiveSensitivity, Preconditioner
+>>>>>>> upstream/master
 import numpy as np
 
 from testclass import CCPiTestClass
@@ -20,7 +24,11 @@ class TestPreconditioners(CCPiTestClass):
         A = IdentityOperator(ig)
         test_precon = MagicMock(None)
         f = LeastSquares(A=A, b=data, c=0.5)
+<<<<<<< HEAD
         alg = GD(initial=ig.allocate('random', seed=10), objective_function=f, preconditioner=test_precon,
+=======
+        alg = GD(initial=ig.allocate('random', seed=10), f=f, preconditioner=test_precon,
+>>>>>>> upstream/master
                  max_iteration=100, update_objective_interval=1, step_size=0.0000001)
         alg.run(5)
         self.assertEqual(len(test_precon.apply.mock_calls), 5)
@@ -39,11 +47,16 @@ class TestPreconditioners(CCPiTestClass):
 
     def test_sensitivity_init(self):
         ig = ImageGeometry(12, 13, 14)
+<<<<<<< HEAD
         data = ig.allocate('random')
+=======
+        data = ig.allocate('random', seed=42)
+>>>>>>> upstream/master
         A = IdentityOperator(ig)
         preconditioner = Sensitivity(A)
         self.assertNumpyArrayAlmostEqual(preconditioner.operator.direct(
             data).as_array(), A.direct(data).as_array())
+<<<<<<< HEAD
         self.assertEqual(preconditioner.reference, None)
         self.assertNumpyArrayEqual(
             preconditioner.array.as_array(), ig.allocate(1.0).as_array())
@@ -60,18 +73,36 @@ class TestPreconditioners(CCPiTestClass):
     def test_sensitivity_calculation(self):
         ig = VectorGeometry(10)
         data = ig.allocate('random')
+=======
+        self.assertNumpyArrayEqual(
+            preconditioner.array.as_array(), ig.allocate(1.0).as_array())
+
+
+
+    def test_sensitivity_calculation(self):
+        ig = VectorGeometry(10)
+        data = ig.allocate('random', seed=42)
+>>>>>>> upstream/master
         data.fill(np.array([1., 2., 3., 4., 5., 6., 7., 8., 9., 10.]))
         A = MatrixOperator(
             np.diag([1/2, 1/2, 1/2, 1/2, 0., 0., 0., 0., 0., 0.]))
         preconditioner = Sensitivity(A)
         self.assertNumpyArrayAlmostEqual(preconditioner.operator.direct(
             data).as_array(), A.direct(data).as_array())
+<<<<<<< HEAD
         self.assertEqual(preconditioner.reference, None)
+=======
+
+>>>>>>> upstream/master
         self.assertNumpyArrayEqual(preconditioner.array.as_array(), np.array([
                                    2., 2., 2., 2., 0, 0, 0, 0, 0, 0]))
 
         f = LeastSquares(A, data)
+<<<<<<< HEAD
         alg = GD(initial=ig.allocate(0), objective_function=f,
+=======
+        alg = GD(initial=ig.allocate(0), f=f,
+>>>>>>> upstream/master
                  max_iteration=100, update_objective_interval=1, step_size=1.)
         alg.gradient_update = ig.allocate(2)
         preconditioner.apply(alg, alg.gradient_update, out=alg.gradient_update)
@@ -92,17 +123,29 @@ class TestPreconditioners(CCPiTestClass):
         step_size = 1.
         preconditioner = Sensitivity(A)
 
+<<<<<<< HEAD
         alg = GD(initial=ig.allocate(0), objective_function=f,
                  max_iteration=100, update_objective_interval=1, step_size=step_size)
         self.assertEqual(alg.preconditioner, None)
 
         precond_pwls = GD(initial=ig.allocate(0), objective_function=f,   preconditioner=preconditioner,
+=======
+        alg = GD(initial=ig.allocate(0), f=f,
+                 max_iteration=100, update_objective_interval=1, step_size=step_size)
+        self.assertEqual(alg.preconditioner, None)
+
+        precond_pwls = GD(initial=ig.allocate(0), f=f,   preconditioner=preconditioner,
+>>>>>>> upstream/master
                           max_iteration=100, update_objective_interval=1, step_size=step_size)
 
         def correct_update_objective(alg):
             # SIRT computes |Ax_{k} - b|_2^2
             # GD with weighted LeastSquares computes the objective included the weight, so we remove the weight
+<<<<<<< HEAD
             return 0.5*(alg.objective_function.A.direct(alg.x) - alg.objective_function.b).squared_norm()
+=======
+            return 0.5*(alg._objective_function.A.direct(alg.x) - alg._objective_function.b).squared_norm()
+>>>>>>> upstream/master
 
         precond_pwls.run(10)
         np.testing.assert_allclose(
@@ -113,7 +156,11 @@ class TestPreconditioners(CCPiTestClass):
     def test_sensitivity_ista_against_sirt(self):
 
         ig = ImageGeometry(12, 13, 14)
+<<<<<<< HEAD
         data = ig.allocate('random')
+=======
+        data = ig.allocate('random', seed=42)
+>>>>>>> upstream/master
         A = IdentityOperator(ig)
 
         sirt = SIRT(ig.allocate(0), A, data, lower=0,
@@ -130,13 +177,21 @@ class TestPreconditioners(CCPiTestClass):
                    max_iteration=100, update_objective_interval=1, step_size=step_size)
         self.assertEqual(alg.preconditioner, None)
 
+<<<<<<< HEAD
         precond_pwls = GD(initial=ig.allocate(0), objective_function=f,   preconditioner=preconditioner,
+=======
+        precond_pwls = GD(initial=ig.allocate(0), f=f,   preconditioner=preconditioner,
+>>>>>>> upstream/master
                           max_iteration=100, update_objective_interval=1, step_size=step_size)
 
         def correct_update_objective(alg):
             # SIRT computes |Ax_{k} - b|_2^2
             # GD with weighted LeastSquares computes the objective included the weight, so we remove the weight
+<<<<<<< HEAD
             return 0.5*(alg.objective_function.A.direct(alg.x) - alg.objective_function.b).squared_norm()
+=======
+            return 0.5*(alg._objective_function.A.direct(alg.x) - alg._objective_function.b).squared_norm()
+>>>>>>> upstream/master
 
         precond_pwls.run(10)
         np.testing.assert_allclose(
@@ -144,6 +199,7 @@ class TestPreconditioners(CCPiTestClass):
         np.testing.assert_allclose(sirt.get_last_loss(
         ), correct_update_objective(precond_pwls), atol=1e-4)
 
+<<<<<<< HEAD
     def test_sensitivity_reference_ista_converges(self):
         ig = ImageGeometry(7, 8, 4)
         data = ig.allocate(0.5)
@@ -165,10 +221,18 @@ class TestPreconditioners(CCPiTestClass):
     def test_adaptive_sensitivity_init(self):
         ig = ImageGeometry(12, 13, 14)
         data = ig.allocate('random')
+=======
+
+
+    def test_adaptive_sensitivity_init(self):
+        ig = ImageGeometry(12, 13, 14)
+        data = ig.allocate('random', seed=42)
+>>>>>>> upstream/master
         A = IdentityOperator(ig)
         preconditioner = AdaptiveSensitivity(A)
         self.assertNumpyArrayAlmostEqual(preconditioner.operator.direct(
             data).as_array(), A.direct(data).as_array())
+<<<<<<< HEAD
         self.assertEqual(preconditioner.reference, None)
         self.assertEqual(preconditioner.delta, 1e-6)
         self.assertEqual(preconditioner.iterations, 100)
@@ -177,10 +241,30 @@ class TestPreconditioners(CCPiTestClass):
 
         preconditioner = AdaptiveSensitivity(
             A, delta=3, iterations=400, reference=data)
+=======
+        self.assertEqual(preconditioner.delta, 1e-6)
+        self.assertEqual(preconditioner.max_iterations, 100)
+        self.assertNumpyArrayEqual(
+            preconditioner.array.as_array(), ig.allocate(1.0).as_array())
+        
+        preconditioner = AdaptiveSensitivity(A, max_iterations=300)
+        self.assertNumpyArrayAlmostEqual(preconditioner.operator.direct(
+            data).as_array(), A.direct(data).as_array())
+        self.assertEqual(preconditioner.delta, 1e-6)
+        self.assertEqual(preconditioner.max_iterations, 300)
+        self.assertNumpyArrayEqual(
+            preconditioner.array.as_array(), ig.allocate(1.0).as_array())
+        
+        
+
+        preconditioner = AdaptiveSensitivity(
+            A, delta=3, max_iterations=400, reference=data)
+>>>>>>> upstream/master
 
         self.assertNumpyArrayAlmostEqual(preconditioner.operator.direct(
             data).as_array(), A.direct(data).as_array())
         self.assertNumpyArrayEqual(
+<<<<<<< HEAD
             preconditioner.reference.as_array(), data.as_array())
         self.assertNumpyArrayEqual(
             preconditioner.array.as_array(), data.as_array())
@@ -190,18 +274,36 @@ class TestPreconditioners(CCPiTestClass):
     def test_adaptive_sensitivity_calculations(self):
         ig = VectorGeometry(10)
         data = ig.allocate('random')
+=======
+            preconditioner.array.as_array(), np.ones(preconditioner.array.shape))
+        self.assertNumpyArrayEqual(
+            preconditioner.freezing_point.as_array(), data.as_array()+3)
+        self.assertEqual(preconditioner.delta, 3)
+        self.assertEqual(preconditioner.max_iterations, -1)
+
+    def test_adaptive_sensitivity_calculations(self):
+        ig = VectorGeometry(10)
+        data = ig.allocate('random', seed=42)
+>>>>>>> upstream/master
         data.fill(np.array([1., 2., 3., 4., 5., 6., 7., 8., 9., 10.]))
         A = MatrixOperator(
             np.diag([1/2, 1/2, 1/2, 1/2, 0., 0., 0., 0., 0., 0.]))
         preconditioner = AdaptiveSensitivity(A)
         self.assertNumpyArrayAlmostEqual(preconditioner.operator.direct(
             data).as_array(), A.direct(data).as_array())
+<<<<<<< HEAD
         self.assertEqual(preconditioner.reference, None)
+=======
+>>>>>>> upstream/master
         self.assertNumpyArrayEqual(preconditioner.array.as_array(), np.array([
                                    2., 2., 2., 2., 0, 0, 0, 0, 0, 0]))
 
         f = LeastSquares(A, data)
+<<<<<<< HEAD
         alg = GD(initial=ig.allocate(0), objective_function=f,
+=======
+        alg = GD(initial=ig.allocate(0), f=f,
+>>>>>>> upstream/master
                  max_iteration=100, update_objective_interval=1, step_size=1.)
         alg.gradient_update = ig.allocate(1)
         preconditioner.apply(alg, alg.gradient_update, out=alg.gradient_update)
@@ -217,7 +319,11 @@ class TestPreconditioners(CCPiTestClass):
         self.assertNumpyArrayAlmostEqual(alg.gradient_update.as_array(), np.array(
             [2*(1+1e-6), 2*(1+1e-6), 2*(1+1e-6), 2*(1+1e-6), 0, 0, 0, 0, 0, 0]))
 
+<<<<<<< HEAD
         preconditioner = AdaptiveSensitivity(A, iterations=0)
+=======
+        preconditioner = AdaptiveSensitivity(A, max_iterations=0)
+>>>>>>> upstream/master
         alg.gradient_update = ig.allocate(1)
         alg.x = ig.allocate(1)
         preconditioner.apply(alg, alg.gradient_update, out=alg.gradient_update)
@@ -229,17 +335,48 @@ class TestPreconditioners(CCPiTestClass):
         self.assertNumpyArrayAlmostEqual(preconditioner.freezing_point.as_array(
         ), np.array([2*(1+1e-6), 2*(1+1e-6), 2*(1+1e-6), 2*(1+1e-6), 0, 0, 0, 0, 0, 0]))
 
+<<<<<<< HEAD
     def test_adaptive_sensitivity_gd_converges(self):
         ig = ImageGeometry(7, 8, 4)
         data = ig.allocate('random', seed=2)
+=======
+    def test_adaptive_sensitivity_reference_ista_converges(self):
+        ig = ImageGeometry(7, 8, 4)
+        data = ig.allocate(0.5)
+        A = IdentityOperator(ig)
+        initial = ig.allocate('random', seed=2)
+
+        f = LeastSquares(A=A, b=data, c=0.5)
+        g = IndicatorBox(lower=0, upper=1)
+        step_size = 1.
+        preconditioner = AdaptiveSensitivity(A, reference=ig.allocate(0.45))
+
+        precond_pwls = ISTA(initial=initial, f=f, g=g,   preconditioner=preconditioner,
+                            update_objective_interval=1, step_size=step_size)
+
+        precond_pwls.run(30)
+        self.assertNumpyArrayAlmostEqual(
+            data.array, precond_pwls.solution.array, 4)
+        
+        
+    def test_adaptive_sensitivity_gd_converges(self):
+        ig = ImageGeometry(7, 8, 4)
+        data = ig.allocate('random', seed=42)
+>>>>>>> upstream/master
         A = IdentityOperator(ig)
         initial = ig.allocate(0)
 
         f = LeastSquares(A=A, b=data, c=0.5)
         step_size = 1.
+<<<<<<< HEAD
         preconditioner = AdaptiveSensitivity(A, iterations=3000, delta=1e-8)
 
         precond_pwls = GD(initial=initial, objective_function=f,
+=======
+        preconditioner = AdaptiveSensitivity(A, max_iterations=3000, delta=1e-8)
+
+        precond_pwls = GD(initial=initial, f=f,
+>>>>>>> upstream/master
                           preconditioner=preconditioner, update_objective_interval=1, step_size=step_size)
 
         precond_pwls.run(3000)
@@ -255,7 +392,11 @@ class TestPreconditioners(CCPiTestClass):
         f = LeastSquares(A=A, b=data, c=0.5)
         g = IndicatorBox(lower=0, upper=1)
         step_size = 1.
+<<<<<<< HEAD
         preconditioner = AdaptiveSensitivity(A, iterations=3000, delta=1e-8)
+=======
+        preconditioner = AdaptiveSensitivity(A, max_iterations=3000, delta=1e-8)
+>>>>>>> upstream/master
 
         precond_pwls = FISTA(initial=initial, f=f, g=g,   preconditioner=preconditioner,
                              update_objective_interval=1, step_size=step_size)
@@ -264,6 +405,7 @@ class TestPreconditioners(CCPiTestClass):
         self.assertNumpyArrayAlmostEqual(
             data.array, precond_pwls.solution.array, 3)
 
+<<<<<<< HEAD
     def test_Adam_init(self):
         preconditioner = Adam()
         self.assertEqual(preconditioner.epsilon, 1e-8)
@@ -373,3 +515,6 @@ class TestPreconditioners(CCPiTestClass):
 
         ls_ada.run(1500)
         self.assertNumpyArrayAlmostEqual(data.array, ls_ada.solution.array, 3)
+=======
+    
+>>>>>>> upstream/master

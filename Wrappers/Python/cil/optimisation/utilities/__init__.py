@@ -19,5 +19,6 @@
 
 from .sampler import Sampler
 from .sampler import SamplerRandom
-from .StepSizeMethods import ConstantStepSize, ArmijoStepSize
+from .StepSizeMethods import ConstantStepSize, ArmijoStepSizeRule, StepSizeRule, BarzilaiBorweinStepSizeRule
 from .preconditioner import  Preconditioner, AdaptiveSensitivity, Sensitivity, Adam, AdaGrad
+

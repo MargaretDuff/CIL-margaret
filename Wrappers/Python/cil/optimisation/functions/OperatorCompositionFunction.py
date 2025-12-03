@@ -23,7 +23,7 @@ import warnings
 
 class OperatorCompositionFunction(Function):
 
-    """ Composition of a function with an operator as : :math:`(F \otimes A)(x) = F(Ax)`
+    """ Composition of a function with an operator as : :math:`(F \circ A)(x) = F(Ax)`
 
             :parameter function: :code:`Function` F
             :parameter operator: :code:`Operator` A
@@ -66,16 +66,14 @@ class OperatorCompositionFunction(Function):
 
     def gradient(self, x, out=None):
 
-        """ Return the gradient of F(Ax),
+        """ Return the gradient of :math:`F(Ax)`,
 
-        ..math ::  (F(Ax))' = A^{T}F'(Ax)
+        :math:`(F(Ax))' = A^{T}F'(Ax)`
 
         """
 
         tmp = self.operator.range_geometry().allocate()
         self.operator.direct(x, out=tmp)
         self.function.gradient(tmp, out=tmp)
-        if out is None:
-            return self.operator.adjoint(tmp)
-        else:
-            self.operator.adjoint(tmp, out=out)
+        return self.operator.adjoint(tmp, out=out)
+

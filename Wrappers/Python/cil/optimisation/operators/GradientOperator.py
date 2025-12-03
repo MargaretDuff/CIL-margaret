@@ -18,10 +18,9 @@
 
 from cil.optimisation.operators import LinearOperator
 from cil.optimisation.operators import FiniteDifferenceOperator
-from cil.framework import BlockGeometry
+from cil.framework import BlockGeometry, ImageGeometry, cilacc
 import logging
 from cil.utilities.multiprocessing import NUM_THREADS
-from cil.framework import ImageGeometry
 import numpy as np
 
 NEUMANN = 'Neumann'
@@ -227,7 +226,6 @@ class Gradient_numpy(LinearOperator):
             self.voxel_size_order = list(domain_geometry.spacing)
         except:
             self.voxel_size_order = [1]*len(domain_geometry.shape)
-
         super(Gradient_numpy, self).__init__(domain_geometry = domain_geometry,
                                              range_geometry = range_geometry)
 
@@ -239,6 +237,7 @@ class Gradient_numpy(LinearOperator):
                  self.FD.direction = axis_index
                  self.FD.voxel_size = self.voxel_size_order[axis_index]
                  self.FD.direct(x, out = out[i])
+             return out
          else:
              tmp = self.range_geometry().allocate()
              for i, axis_index in enumerate(self.ind):
@@ -259,6 +258,7 @@ class Gradient_numpy(LinearOperator):
                     out.fill(tmp)
                 else:
                     out += tmp
+            return out
         else:
             tmp = self.domain_geometry().allocate()
             for i, axis_index in enumerate(self.ind):
@@ -267,26 +267,14 @@ class Gradient_numpy(LinearOperator):
                 tmp += self.FD.adjoint(x.get_item(i))
             return tmp
 
-import ctypes, platform
-from ctypes import util
-# check for the extension
-if platform.system() == 'Linux':
-    dll = 'libcilacc.so'
-elif platform.system() == 'Windows':
-    dll_file = 'cilacc.dll'
-    dll = util.find_library(dll_file)
-elif platform.system() == 'Darwin':
-    dll = 'libcilacc.dylib'
-else:
-    raise ValueError('Not supported platform, ', platform.system())
-
-cilacc = ctypes.cdll.LoadLibrary(dll)
+import ctypes
 
 c_float_p = ctypes.POINTER(ctypes.c_float)
 
 cilacc.openMPtest.restypes = ctypes.c_int32
 cilacc.openMPtest.argtypes = [ctypes.c_int32]
 
+cilacc.fdiff4D.restype = ctypes.c_int32
 cilacc.fdiff4D.argtypes = [ctypes.POINTER(ctypes.c_float),
                        ctypes.POINTER(ctypes.c_float),
                        ctypes.POINTER(ctypes.c_float),
@@ -300,6 +288,7 @@ cilacc.fdiff4D.argtypes = [ctypes.POINTER(ctypes.c_float),
                        ctypes.c_int32,
                        ctypes.c_int32]
 
+cilacc.fdiff3D.restype = ctypes.c_int32
 cilacc.fdiff3D.argtypes = [ctypes.POINTER(ctypes.c_float),
                        ctypes.POINTER(ctypes.c_float),
                        ctypes.POINTER(ctypes.c_float),
@@ -311,6 +300,7 @@ cilacc.fdiff3D.argtypes = [ctypes.POINTER(ctypes.c_float),
                        ctypes.c_int32,
                        ctypes.c_int32]
 
+cilacc.fdiff2D.restype = ctypes.c_int32
 cilacc.fdiff2D.argtypes = [ctypes.POINTER(ctypes.c_float),
                        ctypes.POINTER(ctypes.c_float),
                        ctypes.POINTER(ctypes.c_float),
@@ -390,10 +380,8 @@ class Gradient_C(LinearOperator):
         ndx = np.asarray(x.as_array(), dtype=np.float32, order='C')
         x_p = Gradient_C.ndarray_as_c_pointer(ndx)
 
-        return_val = False
         if out is None:
             out = self.range_geometry().allocate(None)
-            return_val = True
 
         if self.split is False:
             ndout = [el.as_array() for el in out.containers]
@@ -406,7 +394,10 @@ class Gradient_C(LinearOperator):
         arg1 = [Gradient_C.ndarray_as_c_pointer(ndout[i]) for i in range(len(ndout))]
         arg2 = [el for el in self.domain_shape]
         args = arg1 + arg2 + [self.bnd_cond, 1, self.num_threads]
-        self.fd(x_p, *args)
+        status = self.fd(x_p, *args)
+
+        if status != 0:
+            raise RuntimeError('Call to C gradient operator failed')
 
         for i, el in enumerate(self.voxel_size_order):
             if el != 1:
@@ -426,15 +417,11 @@ class Gradient_C(LinearOperator):
                     out.get_item(1).get_item(j).fill(ndout[i])
                     j +=1
 
-        if return_val is True:
-            return out
+        return out
 
     def adjoint(self, x, out=None):
-
-        return_val = False
         if out is None:
             out = self.domain_geometry().allocate(None)
-            return_val = True
 
         ndout = np.asarray(out.as_array(), dtype=np.float32, order='C')
         out_p = Gradient_C.ndarray_as_c_pointer(ndout)
@@ -454,7 +441,10 @@ class Gradient_C(LinearOperator):
         arg2 = [el for el in self.domain_shape]
         args = arg1 + arg2 + [self.bnd_cond, 0, self.num_threads]
 
-        self.fd(out_p, *args)
+        status = self.fd(out_p, *args)
+        if status != 0:
+            raise RuntimeError('Call to C gradient operator failed')
+
         out.fill(ndout)
 
         #reset input data
@@ -462,5 +452,4 @@ class Gradient_C(LinearOperator):
             if el != 1:
                 ndx[i]*= el
 
-        if return_val is True:
-            return out
+        return out

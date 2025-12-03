@@ -1,5 +1,5 @@
-#  Copyright 2020 United Kingdom Research and Innovation
-#  Copyright 2020 The University of Manchester
+#  Copyright 2018 United Kingdom Research and Innovation
+#  Copyright 2018 The University of Manchester
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -15,6 +15,12 @@
 #
 # Authors:
 # CIL Developers, listed at: https://github.com/TomographicImaging/CIL/blob/master/NOTICE.txt
+# Joshua DM Hellier (University of Manchester) [refactorer]
+import ctypes
+from pathlib import Path
 
-import os
-print (os.path.dirname(os.__file__))
+try:
+    cilacc_path = next((Path(__file__).parent.parent / 'lib').resolve().glob("*cilacc.*"))
+except StopIteration:
+    raise FileNotFoundError("cilacc library not found")
+cilacc = ctypes.cdll.LoadLibrary(str(cilacc_path))

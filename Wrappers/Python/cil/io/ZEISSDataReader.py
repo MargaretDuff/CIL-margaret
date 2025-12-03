@@ -16,21 +16,15 @@
 # Authors:
 # CIL Developers, listed at: https://github.com/TomographicImaging/CIL/blob/master/NOTICE.txt
 # Andrew Shartis (UES, Inc.)
-
-
-from cil.framework import AcquisitionData, AcquisitionGeometry, ImageData, ImageGeometry, DataOrder
+from cil.framework import AcquisitionData, AcquisitionGeometry, ImageData, ImageGeometry
+from cil.framework.labels import AngleUnit, AcquisitionDimension, ImageDimension
 import numpy as np
 import os
-import olefile
 import logging
-dxchange_logger = logging.getLogger('dxchange')
-dxchange_logger.setLevel(logging.ERROR)
-
-import dxchange
 import warnings
 
 
-class ZEISSDataReader(object):
+class ZEISSDataReader:
 
     '''
     Create a reader for ZEISS files
@@ -127,17 +121,16 @@ class ZEISSDataReader(object):
 
         if roi is not None:
             if metadata['data geometry'] == 'acquisition':
-                allowed_labels = DataOrder.CIL_AG_LABELS
-                zeiss_data_order = {'angle':0, 'vertical':1, 'horizontal':2}
+                zeiss_data_order = {AcquisitionDimension.ANGLE: 0,
+                                    AcquisitionDimension.VERTICAL: 1,
+                                    AcquisitionDimension.HORIZONTAL: 2}
             else:
-                allowed_labels = DataOrder.CIL_IG_LABELS
-                zeiss_data_order = {'vertical':0, 'horizontal_y':1, 'horizontal_x':2}
+                zeiss_data_order = {ImageDimension.VERTICAL: 0,
+                                    ImageDimension.HORIZONTAL_Y: 1,
+                                    ImageDimension.HORIZONTAL_X: 2}
 
             # check roi labels and create tuple for slicing
             for key in roi.keys():
-                if key not in allowed_labels:
-                    raise Exception("Wrong label, got {0}. Expected dimension labels in {1}, {2}, {3}".format(key,**allowed_labels))
-
                 idx = zeiss_data_order[key]
                 if roi[key] != -1:
                     for i, x in enumerate(roi[key]):
@@ -162,6 +155,10 @@ class ZEISSDataReader(object):
             self._setup_image_geometry()
 
     def read_metadata(self):
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "pkg_resources is deprecated", UserWarning)
+            import dxchange
+        import olefile
         # Read one image to get the metadata
         _,metadata = dxchange.read_txrm(self.file_name,((0,1),(None),(None)))
 
@@ -232,11 +229,11 @@ class ZEISSDataReader(object):
                 ) \
                     .set_panel([self._metadata['image_width'], self._metadata['image_height']],\
                         pixel_size=[self._metadata['detector_pixel_size']/1000,self._metadata['detector_pixel_size']/1000])\
-                    .set_angles(self._metadata['thetas'],angle_unit=AcquisitionGeometry.RADIAN)
+                    .set_angles(self._metadata['thetas'],angle_unit=AngleUnit.RADIAN)
         else:
             self._geometry = AcquisitionGeometry.create_Parallel3D()\
                     .set_panel([self._metadata['image_width'], self._metadata['image_height']])\
-                    .set_angles(self._metadata['thetas'],angle_unit=AcquisitionGeometry.RADIAN)
+                    .set_angles(self._metadata['thetas'],angle_unit=AngleUnit.RADIAN)
         self._geometry.dimension_labels =  ['angle', 'vertical', 'horizontal']
 
     def _setup_image_geometry(self):
@@ -258,6 +255,9 @@ class ZEISSDataReader(object):
         '''
         Reads projections and return Acquisition (TXRM) or Image (TXM) Data container
         '''
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "pkg_resources is deprecated", UserWarning)
+            import dxchange
         # Load projections or slices from file
         slice_range = None
         if self._roi:
@@ -273,7 +273,7 @@ class ZEISSDataReader(object):
                     (int(self._metadata['x-shifts'][num]),int(self._metadata['y-shifts'][num])), \
                     axis=(1,0))
 
-            acq_data = AcquisitionData(array=data, deep_copy=False, geometry=self._geometry.copy(),suppress_warning=True)
+            acq_data = AcquisitionData(array=data, deep_copy=False, geometry=self._geometry.copy())
             return acq_data
         else:
             ig_data = ImageData(array=data, deep_copy=False, geometry=self._geometry.copy())
@@ -289,4 +289,3 @@ class ZEISSDataReader(object):
     def get_metadata(self):
         '''return the metadata of the file'''
         return self._metadata
-

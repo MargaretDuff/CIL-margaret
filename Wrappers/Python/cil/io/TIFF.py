@@ -99,7 +99,7 @@ class TIFFWriter(object):
                data = None,
                file_name = None,
                counter_offset = 0,
-               compression=0):
+               compression=None):
 
         self.data_container = data
         file_name = os.path.abspath(file_name)
@@ -191,7 +191,7 @@ class TIFFStackReader(object):
 
     '''
         Basic TIFF reader which loops through all tiff files in a specific
-        folder and loads them in alphabetic order
+        folder and loads them in alphabetical order
 
         Parameters
         ----------
@@ -202,8 +202,8 @@ class TIFFStackReader(object):
         roi : dictionary, default `None`
             dictionary with roi to load:
             ``{'axis_0': (start, end, step),
-               'axis_1': (start, end, step),
-               'axis_2': (start, end, step)}``
+            'axis_1': (start, end, step),
+            'axis_2': (start, end, step)}``
             roi is specified for axes before transpose.
 
         transpose : bool, default False
@@ -256,8 +256,8 @@ class TIFFStackReader(object):
         Alternatively, if TIFFWriter has been used to save data with lossy compression, then you can rescale the
         read data to approximately the original data with the following code:
 
-        >>> writer = TIFFWriter(file_name = '/path/to/folder', compression='uint8')
-        >>> writer.write(original_data)
+        >>> writer = TIFFWriter(file_name = '/path/to/folder', data=original_data, compression='uint8')
+        >>> writer.write()
         >>> reader = TIFFStackReader(file_name = '/path/to/folder')
         >>> about_original_data = reader.read_rescaled()
     '''
@@ -535,9 +535,9 @@ class TIFFStackReader(object):
 
     def _return_appropriate_data(self, data, geometry):
         if isinstance (geometry, ImageGeometry):
-            return ImageData(data, deep=True, geometry=geometry.copy(), suppress_warning=True)
+            return ImageData(data, deep_copy=True, geometry=geometry.copy())
         elif isinstance (geometry, AcquisitionGeometry):
-            return AcquisitionData(data, deep=True, geometry=geometry.copy(), suppress_warning=True)
+            return AcquisitionData(data, deep_copy=True, geometry=geometry.copy())
         else:
             raise TypeError("Unsupported Geometry type. Expected ImageGeometry or AcquisitionGeometry, got {}"\
                 .format(type(geometry)))

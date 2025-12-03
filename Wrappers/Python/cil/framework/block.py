@@ -15,11 +15,115 @@
 #
 # Authors:
 # CIL Developers, listed at: https://github.com/TomographicImaging/CIL/blob/master/NOTICE.txt
+import functools
+import warnings
+from numbers import Number
 
 import numpy
-from numbers import Number
-import functools
-from cil.utilities.multiprocessing import NUM_THREADS
+
+from ..utilities.multiprocessing import NUM_THREADS
+from .labels import FillType
+
+
+class BackwardCompat(type):
+    @property
+    def RANDOM(cls):
+        warnings.warn("use FillType.RANDOM instead", DeprecationWarning, stacklevel=2)
+        return FillType.RANDOM
+
+    @property
+    def RANDOM_INT(cls):
+        warnings.warn("use FillType.RANDOM_INT instead", DeprecationWarning, stacklevel=2)
+        return FillType.RANDOM_INT
+
+
+class BlockGeometry(metaclass=BackwardCompat):
+    @property
+    def dtype(self):
+        return tuple(i.dtype for i in self.geometries)
+
+    '''Class to hold Geometry as column vector'''
+    #__array_priority__ = 1
+    def __init__(self, *args, **kwargs):
+        ''''''
+        self.geometries = args
+        self.index = 0
+        shape = (len(args),1)
+        self.shape = shape
+
+        n_elements = functools.reduce(lambda x,y: x*y, shape, 1)
+        if len(args) != n_elements:
+            raise ValueError(
+                    'Dimension and size do not match: expected {} got {}'
+                    .format(n_elements, len(args)))
+
+    def get_item(self, index):
+        '''returns the Geometry in the BlockGeometry located at position index'''
+        return self.geometries[index]
+
+    def allocate(self, value=0, **kwargs):
+
+        '''Allocates a BlockDataContainer according to geometries contained in the BlockGeometry'''
+
+        symmetry = kwargs.get('symmetry',False)
+        containers = [geom.allocate(value, **kwargs) for geom in self.geometries]
+
+        if symmetry == True:
+
+            # for 2x2
+            # [ ig11, ig12\
+            #   ig21, ig22]
+
+            # Row-wise Order
+
+            if len(containers)==4:
+                containers[1]=containers[2]
+
+            # for 3x3
+            # [ ig11, ig12, ig13\
+            #   ig21, ig22, ig23\
+            #   ig31, ig32, ig33]
+
+            elif len(containers)==9:
+                containers[1]=containers[3]
+                containers[2]=containers[6]
+                containers[5]=containers[7]
+
+            # for 4x4
+            # [ ig11, ig12, ig13, ig14\
+            #   ig21, ig22, ig23, ig24\ c
+            #   ig31, ig32, ig33, ig34
+            #   ig41, ig42, ig43, ig44]
+
+            elif len(containers) == 16:
+                containers[1]=containers[4]
+                containers[2]=containers[8]
+                containers[3]=containers[12]
+                containers[6]=containers[9]
+                containers[7]=containers[10]
+                containers[11]=containers[15]
+
+        return BlockDataContainer(*containers)
+
+    def __iter__(self):
+        '''BlockGeometry is an iterable'''
+        return self
+
+    def __next__(self):
+        '''BlockGeometry is an iterable'''
+        if self.index < len(self.geometries):
+            result = self.geometries[self.index]
+            self.index += 1
+            return result
+        else:
+            self.index = 0
+            raise StopIteration
+
+    def __eq__(self, value: object) -> bool:
+        if len(self.geometries) != len(value.geometries):
+            return False
+        return functools.reduce(lambda x,y: x and y, \
+                                [sel == vel for sel,vel in zip(self.geometries, value.geometries)], True)
 
 class BlockDataContainer(object):
     '''Class to hold DataContainers as column vector
@@ -66,7 +170,6 @@ class BlockDataContainer(object):
         ''''''
         self.containers = args
         self.index = 0
-        self.geometry = None
         #if len(set([i.shape for i in self.containers])):
         #    self.geometry = self.containers[0].geometry
 
@@ -135,95 +238,91 @@ class BlockDataContainer(object):
     def add(self, other, *args, **kwargs):
         '''Algebra: add method of BlockDataContainer with number/DataContainer or BlockDataContainer
 
-        :param: other (number, DataContainer or subclasses or BlockDataContainer
-        :param: out (optional): provides a placehold for the resul.
+        Parameters
+        ----------
+        other : number, DataContainer or subclasses or BlockDataContainer
+        out : BlockDataContainer, optional
+            Provides a placeholder for the result
         '''
-        out = kwargs.get('out', None)
-        if out is not None:
-            self.binary_operations(BlockDataContainer.ADD, other, *args, **kwargs)
-        else:
-            return self.binary_operations(BlockDataContainer.ADD, other, *args, **kwargs)
+        return self.binary_operations(BlockDataContainer.ADD, other, *args, **kwargs)
     def subtract(self, other, *args, **kwargs):
         '''Algebra: subtract method of BlockDataContainer with number/DataContainer or BlockDataContainer
 
-        :param: other (number, DataContainer or subclasses or BlockDataContainer
-        :param: out (optional): provides a placeholder for the result.
+        Parameters
+        ----------
+        other : number, DataContainer or subclasses or BlockDataContainer
+        out : BlockDataContainer, optional
+            Provides a placeholder for the result
         '''
-        out = kwargs.get('out', None)
-        if out is not None:
-            self.binary_operations(BlockDataContainer.SUBTRACT, other, *args, **kwargs)
-        else:
-            return self.binary_operations(BlockDataContainer.SUBTRACT, other, *args, **kwargs)
+        return self.binary_operations(BlockDataContainer.SUBTRACT, other, *args, **kwargs)
     def multiply(self, other, *args, **kwargs):
         '''Algebra: multiply method of BlockDataContainer with number/DataContainer or BlockDataContainer
 
-        :param: other (number, DataContainer or subclasses or BlockDataContainer)
-        :param: out (optional): provides a placeholder for the result.
+        Parameters
+        ----------
+        other : number, DataContainer or subclasses or BlockDataContainer
+        out : BlockDataContainer, optional
+            Provides a placeholder for the result
         '''
-        out = kwargs.get('out', None)
-        if out is not None:
-            self.binary_operations(BlockDataContainer.MULTIPLY, other, *args, **kwargs)
-        else:
-            return self.binary_operations(BlockDataContainer.MULTIPLY, other, *args, **kwargs)
+        return self.binary_operations(BlockDataContainer.MULTIPLY, other, *args, **kwargs)
     def divide(self, other, *args, **kwargs):
         '''Algebra: divide method of BlockDataContainer with number/DataContainer or BlockDataContainer
 
-        :param: other (number, DataContainer or subclasses or BlockDataContainer)
-        :param: out (optional): provides a placeholder for the result.
+        Parameters
+        ----------
+        other : number, DataContainer or subclasses or BlockDataContainer
+        out : BlockDataContainer, optional
+            Provides a placeholder for the result
+
         '''
-        out = kwargs.get('out', None)
-        if out is not None:
-            self.binary_operations(BlockDataContainer.DIVIDE, other, *args, **kwargs)
-        else:
-            return self.binary_operations(BlockDataContainer.DIVIDE, other, *args, **kwargs)
+        return self.binary_operations(BlockDataContainer.DIVIDE, other, *args, **kwargs)
     def power(self, other, *args, **kwargs):
         '''Algebra: power method of BlockDataContainer with number/DataContainer or BlockDataContainer
 
-        :param: other (number, DataContainer or subclasses or BlockDataContainer
-        :param: out (optional): provides a placeholder for the result.
+        Parameters
+        ----------
+        other : number, DataContainer or subclasses or BlockDataContainer
+        out : BlockDataContainer, optional
+            Provides a placeholder for the result
         '''
-        out = kwargs.get('out', None)
-        if out is not None:
-            self.binary_operations(BlockDataContainer.POWER, other, *args, **kwargs)
-        else:
-            return self.binary_operations(BlockDataContainer.POWER, other, *args, **kwargs)
+        return self.binary_operations(BlockDataContainer.POWER, other, *args, **kwargs)
     def maximum(self, other, *args, **kwargs):
-        '''Algebra: power method of BlockDataContainer with number/DataContainer or BlockDataContainer
+        '''Algebra: maximum method of BlockDataContainer with number/DataContainer or BlockDataContainer
 
-        :param: other (number, DataContainer or subclasses or BlockDataContainer)
-        :param: out (optional): provides a placeholder for the result.
+        Parameters
+        ----------
+        other : number, DataContainer or subclasses or BlockDataContainer
+        out : BlockDataContainer, optional
+            Provides a placeholder for the result
         '''
-        out = kwargs.get('out', None)
-        if out is not None:
-            self.binary_operations(BlockDataContainer.MAXIMUM, other, *args, **kwargs)
-        else:
-            return self.binary_operations(BlockDataContainer.MAXIMUM, other, *args, **kwargs)
+        return self.binary_operations(BlockDataContainer.MAXIMUM, other, *args, **kwargs)
     def minimum(self, other, *args, **kwargs):
-        '''Algebra: power method of BlockDataContainer with number/DataContainer or BlockDataContainer
+        '''Algebra: minimum method of BlockDataContainer with number/DataContainer or BlockDataContainer
 
-        :param: other (number, DataContainer or subclasses or BlockDataContainer)
-        :param: out (optional): provides a placeholder for the result.
+        Parameters
+        ----------
+        other : number, DataContainer or subclasses or BlockDataContainer
+        out : BlockDataContainer, optional
+            Provides a placeholder for the result
+
         '''
-        out = kwargs.get('out', None)
-        if out is not None:
-            self.binary_operations(BlockDataContainer.MINIMUM, other, *args, **kwargs)
-        else:
-            return self.binary_operations(BlockDataContainer.MINIMUM, other, *args, **kwargs)
+        return self.binary_operations(BlockDataContainer.MINIMUM, other, *args, **kwargs)
 
-    def sapyb(self, a, y, b, out, num_threads = NUM_THREADS):
+    def sapyb(self, a, y, b, out=None, num_threads = NUM_THREADS):
         r'''performs axpby element-wise on the BlockDataContainer containers
 
         Does the operation .. math:: a*x+b*y and stores the result in out, where x is self
 
-        :param a: scalar
-        :param b: scalar
-        :param y: compatible (Block)DataContainer
-        :param out: (Block)DataContainer to store the result
+        Parameters
+        ----------
+        a : scalar or BlockDataContainer
+        b : scalar or BlockDataContainer
+        y : compatible (Block)DataContainer
+        out : BlockDataContainer, optional
+            Provides a placeholder for the result
 
-
-        Example:
-        --------
-
+        Example
+        -------
         >>> a = 2
         >>> b = 3
         >>> ig = ImageGeometry(10,11)
@@ -234,15 +333,9 @@ class BlockDataContainer(object):
         >>> out = bdc1.sapyb(a,bdc2,b)
         '''
         if out is None:
-            raise ValueError("out container cannot be None")
+            out = self * 0
         kwargs = {'a':a, 'b':b, 'out':out, 'num_threads': NUM_THREADS}
-        self.binary_operations(BlockDataContainer.SAPYB, y, **kwargs)
-
-
-    def axpby(self, a, b, y, out, dtype=numpy.float32, num_threads = NUM_THREADS):
-        '''Deprecated method. Alias of sapyb'''
-        return self.sapyb(a,y,b,out,num_threads)
-
+        return self.binary_operations(BlockDataContainer.SAPYB, y, **kwargs)
 
 
     def binary_operations(self, operation, other, *args, **kwargs):
@@ -284,7 +377,7 @@ class BlockDataContainer(object):
                 else:
                     res.append(op(other, *args, **kw))
             if out is not None:
-                return
+                return out
             else:
                 return type(self)(*res, shape=self.shape)
         elif isinstance(other, (list, tuple, numpy.ndarray, BlockDataContainer)):
@@ -338,7 +431,7 @@ class BlockDataContainer(object):
                 else:
                     res.append(op(ot, *args, **kw))
             if out is not None:
-                return
+                return out
             else:
                 return type(self)(*res, shape=self.shape)
         else:
@@ -392,7 +485,7 @@ class BlockDataContainer(object):
                     res.append(op(other, *args, **kw))
 
             if out is not None:
-                return
+                return out
             else:
                 return type(self)(*res, shape=self.shape)
 
@@ -465,7 +558,9 @@ class BlockDataContainer(object):
         return numpy.sqrt(self.squared_norm())
 
     def pnorm(self, p=2):
-
+        # See https://github.com/TomographicImaging/CIL/issues/1525#issuecomment-1757413803
+        if not functools.reduce(lambda x,y: x and y, [el.shape == self.containers[0].shape for el in self.containers], True):
+            raise ValueError('pnorm: Incompatible shapes - each container in the BlockDataContainer must have the same shape in order to calculate the pnorm')
         if p==1:
             return sum(self.abs())
         elif p==2:
@@ -645,3 +740,10 @@ class BlockDataContainer(object):
     def __len__(self):
 
         return self.shape[0]
+
+    @property
+    def geometry(self):
+        try:
+            return BlockGeometry(*[el.geometry.copy() for el in self.containers])
+        except AttributeError:
+            return None

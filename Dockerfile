@@ -18,7 +18,7 @@ COPY --chown="${NB_USER}" scripts/requirements-test.yml environment.yml
 RUN sed -ri '/tigre|astra-toolbox| python /d' environment.yml \
   && for pkg in 'jupyter-server-proxy>4.1.0' $CIL_EXTRA_PACKAGES; do echo "  - $pkg" >> environment.yml; done \
   && conda config --env --set channel_priority strict \
-  && for ch in defaults nvidia ccpi intel conda-forge; do conda config --env --add channels $ch; done \
+  && for ch in defaults nvidia ccpi https://software.repos.intel.com/python/conda conda-forge; do conda config --env --add channels $ch; done \
   && mamba env update -n base \
   && mamba clean -a -y -f \
   && rm environment.yml \
@@ -29,7 +29,5 @@ ENV TENSORBOARD_PROXY_URL=/user-redirect/proxy/6006/
 
 # build & install CIL
 COPY --chown="${NB_USER}" . src
-RUN cmake -S ./src -B ./build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONDA_BUILD=ON -DCMAKE_INSTALL_PREFIX="${CONDA_DIR}" \
-  && cmake --build ./build --target install \
-  && rm -rf src build \
+RUN pip install ./src && rm -rf src \
   && fix-permissions "${CONDA_DIR}" /home/${NB_USER}

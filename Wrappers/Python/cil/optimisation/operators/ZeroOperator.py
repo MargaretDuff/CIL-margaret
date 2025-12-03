@@ -21,52 +21,72 @@ from cil.framework import ImageData
 from cil.optimisation.operators import LinearOperator
 
 class ZeroOperator(LinearOperator):
+    r''' `ZeroOperator`:  :math:`\mathrm{O}: X \rightarrow Y`,  maps any element of :math:`x\in X` into the zero element in the space :math:`Y`, so  :math:`\mathrm{O}(x) = \mathrm{O}_{Y}`.
 
-    r'''ZeroOperator:  O: X -> Y,  maps any element of :math:`x\in X` into the zero element :math:`\in Y,  O(x) = O_{Y}`
+        Parameters
+        ----------
+        
+        domain_geometry: CIL Geometry
+            domain of the operator
+        range_geometry: CIL Geometry, optional
+            range of the operator, default: same as domain
 
-        :param gm_domain: domain of the operator
-        :param gm_range: range of the operator, default: same as domain
-
-
-        Note:
+        Note
+        -----
 
         .. math::
-
-                O^{*}: Y^{*} -> X^{*} \text{(Adjoint)}
-
-                < O(x), y > = < x, O^{*}(y) >
-
+                O^{*}: Y^{*} -> X^{*} \text{(Adjoint)} \quad \text{such that} \quad
+                \langle O(x), y \rangle = \langle x, O^{*}(y) \rangle
      '''
-
     def __init__(self, domain_geometry, range_geometry=None):
         if range_geometry is None:
             range_geometry = domain_geometry.clone()
         super(ZeroOperator, self).__init__(domain_geometry=domain_geometry,
                                            range_geometry=range_geometry)
 
-
-
     def direct(self,x,out=None):
-
-        '''Returns O(x)'''
-
-
+        r'''Returns an element of the range space filled with zeros
+        
+        Parameters
+        ----------
+        x : DataContainer or BlockDataContainer
+            Input data
+        out : DataContainer or BlockDataContainer, optional
+            If out is not None the output of the Operator will be filled in out, otherwise a new object is instantiated and returned. The default is None.
+        
+        Returns
+        -------
+        DataContainer
+            :math:`\mathrm{O}(x)`
+        '''
         if out is None:
             return self.range_geometry().allocate(value=0)
         else:
             out.fill(self.range_geometry().allocate(value=0))
+            return out
 
     def adjoint(self,x, out=None):
-
-        '''Returns O^{*}(y)'''
-
+        r'''Returns an element of the domain space filled with zeros
+        
+        Parameters
+        ----------
+        x : DataContainer or BlockDataContainer
+            Input data
+        out : DataContainer or BlockDataContainer, optional
+            If out is not None the output of the Operator will be filled in out, otherwise a new object is instantiated and returned. The default is None.
+        
+        Returns
+        -------
+        DataContainer
+            :math:`\mathrm{O}^{*}(y)`
+        
+        '''
         if out is None:
             return self.domain_geometry().allocate(value=0)
         else:
             out.fill(self.domain_geometry().allocate(value=0))
+            return out
 
     def calculate_norm(self, **kwargs):
-
-        '''Evaluates operator norm of ZeroOperator'''
-
+        r'''Evaluates operator norm of `ZeroOperator`'''
         return 0
