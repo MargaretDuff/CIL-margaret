@@ -1,28 +1,16 @@
 from cil.optimisation.algorithms import SIRT, GD, ISTA, FISTA
-<<<<<<< HEAD
-from cil.optimisation.functions import LeastSquares, IndicatorBox
-from cil.framework import ImageGeometry, VectorGeometry
-from cil.optimisation.operators import IdentityOperator, MatrixOperator
-
-from cil.optimisation.utilities import Sensitivity, AdaptiveSensitivity, Adam, AdaGrad, Preconditioner, ConstantStepSize, ArmijoStepSize
-=======
 from cil.optimisation.functions import LeastSquares, IndicatorBox, ZeroFunction
 from cil.framework import ImageGeometry, VectorGeometry, VectorData
 from cil.optimisation.operators import IdentityOperator, MatrixOperator, LinearOperator
 
 from cil.optimisation.utilities import Sensitivity, AdaptiveSensitivity, Preconditioner, ConstantStepSize, ArmijoStepSizeRule, BarzilaiBorweinStepSizeRule
->>>>>>> upstream/master
 import numpy as np
 
 from testclass import CCPiTestClass
 from unittest.mock import MagicMock
 
 
-<<<<<<< HEAD
-class TestPreconditioners(CCPiTestClass):
-=======
 class TestStepSizes(CCPiTestClass):
->>>>>>> upstream/master
 
     def test_step_sizes_called(self):
 
@@ -32,13 +20,8 @@ class TestStepSizes(CCPiTestClass):
         step_size_test = ConstantStepSize(3)
         step_size_test.get_step_size = MagicMock(return_value=.1)
         f = LeastSquares(A=A, b=data, c=0.5)
-<<<<<<< HEAD
-        alg = GD(initial=ig.allocate('random', seed=10), objective_function=f, step_size_rule=step_size_test,
-                 max_iteration=100, update_objective_interval=1)
-=======
         alg = GD(initial=ig.allocate('random', seed=10), f=f, step_size=step_size_test,
                   update_objective_interval=1)
->>>>>>> upstream/master
 
         alg.run(5)
 
@@ -46,70 +29,23 @@ class TestStepSizes(CCPiTestClass):
 
         step_size_test = ConstantStepSize(3)
         step_size_test.get_step_size = MagicMock(return_value=.1)
-<<<<<<< HEAD
-        alg = ISTA(initial=ig.allocate('random', seed=10), f=f, g=IndicatorBox(lower=0), step_size_rule=step_size_test,
-                   max_iteration=100, update_objective_interval=1)
-=======
         alg = ISTA(initial=ig.allocate('random', seed=10), f=f, g=IndicatorBox(lower=0), step_size=step_size_test,
                     update_objective_interval=1)
->>>>>>> upstream/master
         alg.run(5)
         self.assertEqual(len(step_size_test.get_step_size.mock_calls), 5)
 
         step_size_test = ConstantStepSize(3)
         step_size_test.get_step_size = MagicMock(return_value=.1)
-<<<<<<< HEAD
-        alg = FISTA(initial=ig.allocate('random', seed=10), f=f, g=IndicatorBox(lower=0), step_size_rule=step_size_test,
-                    max_iteration=100, update_objective_interval=1)
-        alg.run(5)
-        self.assertEqual(len(step_size_test.get_step_size.mock_calls), 5)
-
-=======
         alg = FISTA(initial=ig.allocate('random', seed=10), f=f, g=IndicatorBox(lower=0), step_size=step_size_test,
                      update_objective_interval=1)
         alg.run(5)
         self.assertEqual(len(step_size_test.get_step_size.mock_calls), 5)
 
 class TestStepSizeConstant(CCPiTestClass):
->>>>>>> upstream/master
     def test_constant(self):
         test_stepsize = ConstantStepSize(0.3)
         self.assertEqual(test_stepsize.step_size, 0.3)
 
-<<<<<<< HEAD
-    def test_armijo_init(self):
-        test_stepsize = ArmijoStepSize(alpha=1e3, beta=0.4, kmax=40)
-        self.assertEqual(test_stepsize.alpha_orig, 1e3)
-        self.assertEqual(test_stepsize.beta, 0.4)
-        self.assertEqual(test_stepsize.kmax, 40)
-
-        test_stepsize = ArmijoStepSize()
-        self.assertEqual(test_stepsize.alpha_orig, 1e6)
-        self.assertEqual(test_stepsize.beta, 0.5)
-        self.assertEqual(test_stepsize.kmax, np.ceil(
-            2 * np.log10(1e6) / np.log10(2)))
-
-    def test_armijo_calculation(self):
-        test_stepsize = ArmijoStepSize(alpha=8, beta=0.5, kmax=100)
-        ig = VectorGeometry(2)
-        data = ig.allocate('random')
-        data.fill(np.array([3.5, 3.5]))
-        A = MatrixOperator(np.diag([1., 1.]))
-        f = LeastSquares(A, data)
-        alg = GD(initial=ig.allocate(0), objective_function=f,
-                 max_iteration=100, update_objective_interval=1, step_size_rule=test_stepsize)
-        alg.gradient_update = ig.allocate(-1)
-        step_size = test_stepsize.get_step_size(alg)
-        self.assertAlmostEqual(step_size, 4)
-
-        alg.gradient_update = ig.allocate(-.5)
-        step_size = test_stepsize.get_step_size(alg)
-        self.assertAlmostEqual(step_size, 8)
-
-        alg.gradient_update = ig.allocate(-2)
-        step_size = test_stepsize.get_step_size(alg)
-        self.assertAlmostEqual(step_size, 2)
-=======
 class TestStepSizeArmijo(CCPiTestClass):
     
     def setUp(self):
@@ -333,4 +269,3 @@ class TestStepSizeBB(CCPiTestClass):
         
         
 
->>>>>>> upstream/master

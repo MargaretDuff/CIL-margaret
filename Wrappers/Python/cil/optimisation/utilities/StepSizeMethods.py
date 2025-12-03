@@ -23,7 +23,6 @@ import logging
 
 log = logging.getLogger(__name__)
 
-
 class StepSizeRule(ABC):
     """
     Abstract base class for a step size rule. The abstract method, `get_step_size` takes in an algorithm and thus can access all parts of the algorithm (e.g. current iterate, current gradient, objective functions etc) and from this  should return a float as a step size. 

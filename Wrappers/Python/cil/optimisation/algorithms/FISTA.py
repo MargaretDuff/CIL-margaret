@@ -18,11 +18,7 @@
 
 from cil.optimisation.algorithms import Algorithm
 from cil.optimisation.functions import ZeroFunction
-<<<<<<< HEAD
-from cil.optimisation.utilities import ConstantStepSize
-=======
 from cil.optimisation.utilities import ConstantStepSize, StepSizeRule
->>>>>>> upstream/master
 import numpy
 import logging
 from numbers import Real, Number
@@ -64,18 +60,6 @@ class ISTA(Algorithm):
         Differentiable function. If `None` is passed, the algorithm will use the ZeroFunction.
     g : Function or `None`
         Convex function with *simple* proximal operator. If `None` is passed, the algorithm will use the ZeroFunction.
-<<<<<<< HEAD
-    step_size : positive :obj:`float`, default = None
-                Step size for the gradient step of ISTA.
-                The default :code:`step_size` is :math:`\frac{1}{L}` or 1 if `f=None`.
-   step_size_rule: class with a `get_step_size` method or a function that takes an initialised CIL function as an argument and outputs a step size, default is None
-            This could be a custom `step_size_rule` or one provided in :meth:`~cil.optimisation.utilities.StepSizeMethods`. If None is passed  then the algorithm will use either `ConstantStepSize` or `ArmijioStepSize` depending on if a `step_size` is provided. 
-        preconditioner: class with a `apply` method or a function that takes an initialised CIL function as an argument and modifies a provided `gradient`.
-            This could be a custom `preconditioner` or one provided in :meth:`~cil.optimisation.utilities.preconditoner`. If None is passed  then `self.gradient_update` will remain unmodified. 
- 
-    
-    
-=======
     step_size : positive :obj:`float` or child class of :meth:`cil.optimisation.utilities.StepSizeRule`',  default = None
                 Step size for the gradient step of ISTA. If a float is passed, this is used as a constant step size.  If a child class of :meth:`cil.optimisation.utilities.StepSizeRule` is passed then its method :meth:`get_step_size` is called for each update. 
                 The default :code:`step_size` is a constant :math:`\frac{0.99*2}{L}` or 1 if `f=None`.
@@ -83,7 +67,6 @@ class ISTA(Algorithm):
             This could be a custom `preconditioner` or one provided in :meth:`~cil.optimisation.utilities.preconditoner`. If None is passed then `self.gradient_update` will remain unmodified. 
 
 
->>>>>>> upstream/master
     kwargs: Keyword arguments
         Arguments from the base class :class:`.Algorithm`.
 
@@ -119,48 +102,6 @@ class ISTA(Algorithm):
     """
 
     def _provable_convergence_condition(self):
-<<<<<<< HEAD
-        if isinstance(self.step_size_rule, ConstantStepSize): 
-            return self.step_size_rule.step_size <= 0.99*2.0/self.f.L
-        else:
-            raise TypeError("Can't check convergence criterion for non-constant step size")
-
-    @property
-    def step_size(self):
-        if isinstance(self.step_size_rule, ConstantStepSize):
-            return self.step_size_rule.step_size
-        else:
-            raise TypeError("There is not a constant step size, it is set by a step-size rule")
-
-
-    # Set default step size
-    def get_constant_step_size(self, step_size):
-        """ Set default step size.
-        """
-
-        if step_size is None:
-            if isinstance(self.f, ZeroFunction):
-                ret= 1
-
-            elif isinstance(self.f.L, Number):
-                ret = 0.99*2.0/self.f.L
-
-            else:
-                raise ValueError("Function f is not differentiable")
-
-        else:
-            ret = step_size
-            
-        return ret
-
-    def __init__(self, initial, f, g, step_size = None, step_size_rule=None, preconditioner=None,**kwargs):
-
-        super(ISTA, self).__init__(**kwargs)
-        self._step_size = step_size
-        self.set_up(initial=initial, f=f, g=g, step_size=step_size,step_size_rule=step_size_rule, preconditioner=preconditioner, **kwargs)
-
-    def set_up(self, initial, f, g, step_size, step_size_rule, preconditioner, **kwargs):
-=======
         if self.preconditioner is not None:
             raise NotImplementedError(
                 "Can't check convergence criterion if a preconditioner is used ")
@@ -202,7 +143,6 @@ class ISTA(Algorithm):
                     preconditioner=preconditioner, **kwargs)
 
     def set_up(self, initial, f, g, step_size, preconditioner, **kwargs):
->>>>>>> upstream/master
         """Set up of the algorithm"""
         log.info("%s setting up", self.__class__.__name__)
         # set up ISTA
@@ -226,19 +166,6 @@ class ISTA(Algorithm):
                 'You set both f and g to be the ZeroFunction and thus the iterative method will not update and will remain fixed at the initial value.')
 
         # set step_size
-<<<<<<< HEAD
-        if step_size_rule is None: 
-
-                step_size_rule=ConstantStepSize(self.get_constant_step_size(step_size=step_size))
-        else:
-            if step_size is not None:
-                raise TypeError('You have passed both a `step_size` and a `step_size_rule`, please pass one or the other')
-
-        self.step_size_rule=step_size_rule
-        
-        self.preconditioner = preconditioner 
-        
-=======
         if step_size is None:
             self.step_size_rule = ConstantStepSize(
                 self._calculate_default_step_size())
@@ -249,7 +176,6 @@ class ISTA(Algorithm):
         
         self.preconditioner = preconditioner
 
->>>>>>> upstream/master
         self.configured = True
         log.info("%s configured", self.__class__.__name__)
 
@@ -263,16 +189,6 @@ class ISTA(Algorithm):
         # gradient step
         self.f.gradient(self.x_old, out=self.gradient_update)
         if self.preconditioner is not None:
-<<<<<<< HEAD
-            self.preconditioner.apply(self, self.gradient_update, out=self.gradient_update) 
-
-        step_size = self.step_size_rule.get_step_size(self)
-        
-        self.x_old.sapyb(1., self.gradient_update, -step_size, out=self.x_old)
-
-        # proximal step
-        self.g.proximal(self.x_old, step_size, out=self.x)
-=======
             self.preconditioner.apply(
                 self, self.gradient_update, out=self.gradient_update)
 
@@ -285,7 +201,6 @@ class ISTA(Algorithm):
 
         # proximal step
         self.g.proximal(self.x_old, self._step_size, out=self.x)
->>>>>>> upstream/master
 
     def _update_previous_solution(self):
         """ Swaps the references to current and previous solution based on the :func:`~Algorithm.update_previous_solution` of the base class :class:`Algorithm`.
@@ -351,19 +266,10 @@ class FISTA(ISTA):
         Differentiable function.  If `None` is passed, the algorithm will use the ZeroFunction.
     g : Function or `None`
         Convex function with *simple* proximal operator. If `None` is passed, the algorithm will use the ZeroFunction.
-<<<<<<< HEAD
-    step_size : positive :obj:`float`, default = None
-                Step size for the gradient step of FISTA.
-                The default :code:`step_size` is :math:`\frac{1}{L}` or 1 if `f=None`.
-    step_size_rule: class with a `get_step_size` method or a function that takes an initialised CIL function as an argument and outputs a step size, default is None
-            This could be a custom `step_size_rule` or one provided in :meth:`~cil.optimisation.utilities.StepSizeMethods`. If None is passed  then the algorithm will use either `ConstantStepSize` or `ArmijioStepSize` depending on if a `step_size` is provided. 
-    preconditioner: class with a `apply` method or a function that takes an initialised CIL function as an argument and modifies a provided `gradient`.
-=======
     step_size : positive :obj:`float` or child class of :meth:`cil.optimisation.utilities.StepSizeRule`',  default = None
                 Step size for the gradient step of ISTA. If a float is passed, this is used as a constant step size. If a child class of :meth:`cil.optimisation.utilities.StepSizeRule` is passed then it's method :meth:`get_step_size` is called for each update. 
                 The default :code:`step_size` is a constant :math:`\frac{1}{L}` or 1 if `f=None`.
     preconditioner : class with an `apply` method or a function that takes an initialised CIL function as an argument and modifies a provided `gradient`.
->>>>>>> upstream/master
             This could be a custom `preconditioner` or one provided in :meth:`~cil.optimisation.utilities.preconditoner`. If None is passed  then `self.gradient_update` will remain unmodified. 
 
     kwargs: Keyword arguments
@@ -399,45 +305,12 @@ class FISTA(ISTA):
 
     """
 
-<<<<<<< HEAD
-    def get_constant_step_size(self, step_size):
-
-        """Set the default step size
-=======
     def _calculate_default_step_size(self):
         """Calculate the default step size if a step size rule or step size is not provided 
->>>>>>> upstream/master
         """
         return 1./self.f.L
 
 
-<<<<<<< HEAD
-            if isinstance(self.f, ZeroFunction):
-                ret = 1
-
-            elif isinstance(self.f.L, Number):
-                ret = 1./self.f.L
-
-            else:
-                raise ValueError("Function f is not differentiable")
-
-        else:
-            ret = step_size
-        return ret
-    
-        
-    def _provable_convergence_condition(self):
-        if isinstance(self.step_size_rule, ConstantStepSize): 
-            return self.step_size_rule.step_size <= 1./self.f.L
-        else:
-            raise TypeError("Can't check convergence criterion for non-constant step size")
-
-    def __init__(self, initial, f, g, step_size = None, step_size_rule=None, preconditioner=None, **kwargs):
-
-        self.y = initial.copy()
-        self.t = 1
-        super(FISTA, self).__init__(initial=initial, f=f, g=g, step_size=step_size, step_size_rule=step_size_rule, preconditioner=preconditioner, **kwargs)
-=======
 
     def _provable_convergence_condition(self):
         if self.preconditioner is not None:
@@ -456,7 +329,6 @@ class FISTA(ISTA):
         self.t = 1
         super(FISTA, self).__init__(initial=initial, f=f, g=g,
                                     step_size=step_size,  preconditioner=preconditioner, **kwargs)
->>>>>>> upstream/master
 
     def update(self):
         r"""Performs a single iteration of FISTA. For :math:`k\geq 1`:
@@ -474,17 +346,6 @@ class FISTA(ISTA):
         self.t_old = self.t
 
         self.f.gradient(self.y, out=self.gradient_update)
-<<<<<<< HEAD
-        
-        if self.preconditioner is not None:
-            self.preconditioner.apply(self, self.gradient_update, out=self.gradient_update)
-
-        step_size = self.step_size_rule.get_step_size(self)
-        
-        self.y.sapyb(1., self.gradient_update, -step_size, out=self.y)
-
-        self.g.proximal(self.y, step_size, out=self.x)
-=======
 
         if self.preconditioner is not None:
             self.preconditioner.apply(
@@ -495,7 +356,6 @@ class FISTA(ISTA):
         self.y.sapyb(1., self.gradient_update, -self._step_size, out=self.y)
 
         self.g.proximal(self.y, self._step_size, out=self.x)
->>>>>>> upstream/master
 
         self.t = 0.5*(1 + numpy.sqrt(1 + 4*(self.t_old**2)))
 

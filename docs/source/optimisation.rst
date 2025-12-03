@@ -702,11 +702,7 @@ In each iteration of the :code:`TestAlgo`, the objective :math:`x` is reduced by
 
 Step size methods 
 ------------------
-<<<<<<< HEAD
-A step size method is a class which acts on an algorithm and can be passed to  `cil.optimisation.algorithm.GD`  or `cil.optimisation.algorithm.FISTA` and it's method `get_step_size` is called after the calculation of the gradient before the gradient descent step is taken. It outputs a float value to be used as the step-size. 
-=======
 A step size method is a class which acts on an algorithm and can be passed to  `cil.optimisation.algorithm.GD`, `cil.optimisation.algorithm.ISTA`  `cil.optimisation.algorithm.FISTA` and it's method `get_step_size` is called after the calculation of the gradient before the gradient descent step is taken. It outputs a float value to be used as the step-size. 
->>>>>>> upstream/master
 
 Currently in CIL we have a base class:
 
@@ -718,15 +714,6 @@ We also have a number of example classes:
 .. autoclass:: cil.optimisation.utilities.StepSizeMethods.ConstantStepSize
    :members:
 
-<<<<<<< HEAD
-.. autoclass:: cil.optimisation.utilities.StepSizeMethods.ArmijoStepSize
-   :members:
-
-
-Preconditioners
-----------------
-A preconditioner is a class which acts on an algorithm and can be passed to  `cil.optimisation.algorithm.GD` or `cil.optimisation.algorithm.FISTA` and it's method `apply` is called after the calculation of the gradient before the gradient descent step is taken. It modifies and returns a passed `gradient`. 
-=======
 .. autoclass:: cil.optimisation.utilities.StepSizeMethods.ArmijoStepSizeRule
    :members:
 
@@ -738,7 +725,6 @@ A preconditioner is a class which acts on an algorithm and can be passed to  `ci
 Preconditioners
 ----------------
 A preconditioner is a class which acts on an algorithm and can be passed to  `cil.optimisation.algorithm.GD`, `cil.optimisation.algorithm.ISTA` or `cil.optimisation.algorithm.FISTA` and it's method `apply` is called after the calculation of the gradient before the gradient descent step is taken. It modifies and returns a passed `gradient`. 
->>>>>>> upstream/master
 
 Currently in CIL we have a base class:
 
@@ -753,15 +739,6 @@ We also have a number of already provided pre-conditioners
 .. autoclass:: cil.optimisation.utilities.preconditioner.AdaptiveSensitivity
    :members:
 
-<<<<<<< HEAD
-.. autoclass:: cil.optimisation.utilities.preconditioner.AdaGrad
-   :members:
-
-.. autoclass:: cil.optimisation.utilities.preconditioner.Adam
-   :members:
-
-=======
->>>>>>> upstream/master
 Block Framework
 ***************
 
