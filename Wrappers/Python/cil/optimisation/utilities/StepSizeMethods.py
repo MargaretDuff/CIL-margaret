@@ -115,6 +115,7 @@ class ArmijoStepSizeRule(StepSizeRule):
             self.max_iterations = numpy.ceil(2 * numpy.log10(self.alpha_orig) / numpy.log10(2))
             
         self.warmstart=warmstart
+        self.x_armijo = None
 
     def get_step_size(self, algorithm):
         """
@@ -130,8 +131,9 @@ class ArmijoStepSizeRule(StepSizeRule):
             self.alpha = self.alpha_orig
         
         f_x = algorithm.calculate_objective_function_at_point(algorithm.solution)
-
-        self.x_armijo = algorithm.solution.copy()
+        
+        if self.x_armijo is None:
+            self.x_armijo = algorithm.solution.geometry().allocate(None)
         
         log.debug("Starting Armijo backtracking with initial step size: %f", self.alpha)
         

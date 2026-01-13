@@ -78,7 +78,10 @@ class LeastSquares(Function):
             return self.c * y.dot(y)
         else:
             wy = self.weight.multiply(y)
-            return self.c * y.dot(wy)
+            
+        a = self.c * y.dot(wy)
+        del y, wy
+        return a 
 
     def gradient(self, x, out=None):
 
@@ -102,6 +105,7 @@ class LeastSquares(Function):
             tmp.multiply(self.weight, out=tmp)
         self.A.adjoint(tmp, out = out)
         out.multiply(self.c * 2.0, out=out)
+        del tmp
         return out
 
     @property

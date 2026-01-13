@@ -68,11 +68,12 @@ class AstraProjector3D(LinearOperator):
         DataContainer
             The processed data. Suppressed if `out` is passed
         '''
-
+        if out is None:
+            out = self.sinogram_geometry.allocate()
         self.fp.set_input(x)
-        temp= self.fp.get_output(out = out)
+        self.fp.get_output(out = out)
         self.fp.__dict__['input']= None
-        return temp
+        return out
 
     def adjoint(self, x, out=None):
         '''Applies the adjoint of the operator, i.e. the backward projection.
@@ -90,8 +91,9 @@ class AstraProjector3D(LinearOperator):
         DataContainer
             The processed data. Suppressed if `out` is passed
         '''
-
+        if out is None:
+            out = self.volume_geometry.allocate()
         self.bp.set_input(x)
-        temp= self.bp.get_output(out = out)
+        self.bp.get_output(out = out)
         self.bp.__dict__['input']= None
-        return temp
+        return out

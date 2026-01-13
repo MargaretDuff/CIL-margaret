@@ -116,6 +116,7 @@ class AstraBackProjector3D(DataProcessor):
             out = ImageData(arr_out, deep_copy=False, geometry=self.volume_geometry.copy())
         else:
             out.fill(arr_out)
+        del data_temp
         return out
 
     def create_backprojection3d_gpu(self, data, proj_geom, vol_geom, returnData=True, vol_id=None):

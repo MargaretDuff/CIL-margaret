@@ -120,4 +120,5 @@ class AstraForwardProjector2D(DataProcessor):
             out = AcquisitionData(arr_out, deep_copy=False, geometry=self.sinogram_geometry.copy())
         else:
             out.fill(arr_out)
+        del IM_data_temp
         return out

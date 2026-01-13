@@ -117,6 +117,7 @@ class AstraForwardProjector3D(DataProcessor):
             out = AcquisitionData(arr_out, deep_copy=False, geometry=self.sinogram_geometry.copy())
         else:
             out.fill(arr_out)
+        del data_temp
         return out
 
     def create_sino3d_gpu(self, data, proj_geom, vol_geom, returnData=True, gpuIndex=None, sino_id=None):

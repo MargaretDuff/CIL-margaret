@@ -117,4 +117,7 @@ class AstraBackProjector2D(DataProcessor):
             out = ImageData(arr_out, deep_copy=False, geometry=self.volume_geometry.copy())
         else:
             out.fill(arr_out)
+            
+        del data_temp
+        
         return out
